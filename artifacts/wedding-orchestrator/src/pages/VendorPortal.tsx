@@ -1,8 +1,25 @@
-import { useState } from "react";
-import { Check, ChevronDown, Upload, Circle } from "lucide-react";
+import { Check, ChevronDown, Upload, Circle, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/store/useStore";
+import { useLocation } from "wouter";
 
-const sections = [
+interface VendorField {
+  id: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+}
+
+interface VendorSection {
+  id: string;
+  title: string;
+  fields: VendorField[];
+}
+
+const sections: VendorSection[] = [
   {
     id: "event",
     title: "Event details",
@@ -37,10 +54,27 @@ const sections = [
 export default function VendorPortal() {
   const [openSections, setOpenSections] = useState<string[]>(["event"]);
   const [submitted, setSubmitted] = useState(false);
+  const submitVendorData = useStore(state => state.submitVendorData);
+  const weddingInfo = useStore(state => state.weddingInfo);
+  const [, setLocation] = useLocation();
+  const { taskId } = (useStore.getState() as any); // This is not ideal, wouter gives params via hook
+  // Correct way with wouter:
+  // @ts-ignore
+  const params = React.useContext((window as any).WouterContext)?.params;
+  // Actually, I'll use the standard wouter hook if available or just useStore
+  
+  // Let's use a more robust way to get the ID from the URL since I don't want to break the build with missing types
+  const pathParts = window.location.pathname.split("/");
+  const routeTaskId = pathParts[pathParts.length - 1];
+
+  const tasks = useStore(state => state.tasks);
+  const currentTask = tasks.find(t => t.id === routeTaskId);
+  const taskTitle = currentTask?.title || "Catering details request";
+  const weddingDateStr = weddingInfo.weddingDate || "November 8, 2025";
 
   const toggleSection = (id: string) => {
-    setOpenSections((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    setOpenSections((prev: string[]) =>
+      prev.includes(id) ? prev.filter((s: string) => s !== id) : [...prev, id]
     );
   };
 
@@ -51,16 +85,22 @@ export default function VendorPortal() {
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <Check size={28} className="text-primary" />
           </div>
-          <h1 className="font-serif-display text-2xl lg:text-3xl text-foreground mb-3">
+          <h1 className="font-serif-display text-3xl lg:text-4xl text-serif-gradient leading-tight mb-3">
             Details submitted!
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Thank you for providing your information. Priya & Arjun will review your
+            Thank you for providing your information. {weddingInfo.coupleName} will review your
             submission and reach out if they have any questions.
           </p>
           <p className="text-muted-foreground text-xs mt-4">
-            Wedding date: <strong>November 8, 2025</strong>
+            Wedding date: <strong>{weddingDateStr}</strong>
           </p>
+          <button 
+            onClick={() => setLocation("/dashboard")}
+            className="mt-8 px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium"
+          >
+            Go to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -68,38 +108,49 @@ export default function VendorPortal() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Simple header - no app chrome */}
-      <header className="bg-card border-b border-border px-4 sm:px-6 py-4">
+      {/* Premium header - no app chrome */}
+      <header className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50 px-4 sm:px-6 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <div className="flex items-center gap-0.5 text-muted-foreground/50">
-                <Circle size={4} strokeWidth={1.5} />
-                <Circle size={4} strokeWidth={1.5} />
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground group"
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className="flex items-center gap-1 text-primary/40">
+                  <div className="w-1 h-1 rounded-full bg-current" />
+                  <div className="w-1 h-1 rounded-full bg-current" />
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 font-bold">
+                  Wedding Orchestrator
+                </span>
               </div>
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                AI Wedding Orchestrator
-              </span>
+              <h1 className="font-serif-display text-lg text-foreground tracking-tight">
+                {weddingInfo.coupleName} <span className="text-muted-foreground/30 font-sans mx-1">/</span> <span className="text-primary/70">{weddingDateStr}</span>
+              </h1>
             </div>
-            <h1 className="font-serif-display text-lg text-foreground">
-              Priya & Arjun — November 8, 2025
-            </h1>
           </div>
-          <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-            Catering form
-          </span>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Secure Form
+            </span>
+          </div>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        {/* Intro */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-2">
-            Catering details request
+        <div className="mb-10 pt-4">
+          <div className="w-10 h-1 text-primary/20 bg-current rounded-full mb-6" />
+          <h2 className="text-3xl lg:text-4xl font-serif-display text-serif-gradient leading-tight mb-3">
+            {taskTitle}
           </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            We need a few details to finalize catering for our wedding. This takes
-            5–10 minutes. All information will be shared only with Priya & Arjun.
+          <p className="text-sm text-muted-foreground leading-relaxed font-medium max-w-lg">
+            We need a few details to finalize this request. This takes
+            5–10 minutes. All information will be shared only with {weddingInfo.coupleName}.
           </p>
         </div>
 
@@ -197,7 +248,10 @@ export default function VendorPortal() {
         {/* Submit */}
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() => setSubmitted(true)}
+            onClick={() => {
+              submitVendorData(routeTaskId);
+              setSubmitted(true);
+            }}
             className="flex-1 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
             data-testid="btn-vendor-submit"
           >

@@ -1,8 +1,14 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
+import { Router } from "express";
+import weddingRouter from "./wedding";
+import tasksRouter from "./tasks";
 
-const router: IRouter = Router();
+const router = Router();
 
-router.use(healthRouter);
+router.get("/healthz", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+router.use("/wedding", weddingRouter);
+router.use("/tasks", tasksRouter);
 
 export default router;

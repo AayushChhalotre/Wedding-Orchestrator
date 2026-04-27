@@ -1,22 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for Wedding Orchestrator
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: wedding
+    description: Wedding configuration
+  - name: tasks
+    description: Task management
+  - name: budget
+    description: Budget tracking
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +28,107 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /wedding:
+    get:
+      operationId: getWedding
+      tags: [wedding]
+      summary: Get wedding details
+      responses:
+        "200":
+          description: Wedding details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+    patch:
+      operationId: updateWedding
+      tags: [wedding]
+      summary: Update wedding details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingUpdate"
+      responses:
+        "200":
+          description: Updated wedding details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List all tasks
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreate"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{taskId}:
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +139,90 @@ components:
       required:
         - status
 
+    Wedding:
+      type: object
+      properties:
+        id: { type: string }
+        coupleName: { type: string }
+        partner1Name: { type: string }
+        partner2Name: { type: string }
+        weddingDate: { type: string }
+        city: { type: string }
+        location: { type: string }
+        budget: { type: string }
+        guests: { type: string }
+        planningPace: { type: string, enum: [marathon, sprint, blitz] }
+        budgetPhase: { type: string, enum: [dreaming, tracking] }
+        activeScenarioId: { type: string }
+      required: [coupleName, partner1Name, partner2Name, weddingDate, city, location, budget, guests, planningPace, budgetPhase]
+
+    WeddingUpdate:
+      type: object
+      properties:
+        coupleName: { type: string }
+        partner1Name: { type: string }
+        partner2Name: { type: string }
+        weddingDate: { type: string }
+        city: { type: string }
+        location: { type: string }
+        budget: { type: string }
+        guests: { type: string }
+        planningPace: { type: string, enum: [marathon, sprint, blitz] }
+        budgetPhase: { type: string, enum: [dreaming, tracking] }
+        activeScenarioId: { type: string }
+
+    Task:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        dueDate: { type: string }
+        status: { type: string }
+        phase: { type: string }
+        phaseId: { type: string }
+        owner: { type: string }
+        ownerInitials: { type: string }
+        ownerType: { type: string, enum: [couple, vendor, family] }
+        category: { type: string }
+        dependencies: { type: array, items: { type: string } }
+        blocks: { type: array, items: { type: string } }
+        whyItMatters: { type: string }
+        notes: { type: string }
+        priority: { type: string, enum: [high, medium, low] }
+        effort: { type: integer }
+        estimatedCost: { type: number }
+        actualCost: { type: number }
+        isMilestone: { type: boolean }
+        budgetCategoryId: { type: string }
+      required: [id, title, dueDate, status, phase, phaseId, owner, ownerInitials, ownerType, category, whyItMatters, notes, priority, effort]
+
+    TaskCreate:
+      type: object
+      properties:
+        title: { type: string }
+        dueDate: { type: string }
+        status: { type: string }
+        phase: { type: string }
+        phaseId: { type: string }
+        owner: { type: string }
+        ownerInitials: { type: string }
+        ownerType: { type: string, enum: [couple, vendor, family] }
+        category: { type: string }
+        dependencies: { type: array, items: { type: string } }
+        whyItMatters: { type: string }
+        notes: { type: string }
+        priority: { type: string, enum: [high, medium, low] }
+        effort: { type: integer }
+        estimatedCost: { type: number }
+        budgetCategoryId: { type: string }
+      required: [title, dueDate, status, phase, phaseId, owner, ownerInitials, ownerType, category, whyItMatters, notes, priority, effort]
+
+    TaskUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        dueDate: { type: string }
+        status: { type: string }
+        owner: { type: string }
+        notes: { type: string }
+        actualCost: { type: number }

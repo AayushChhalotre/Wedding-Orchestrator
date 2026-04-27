@@ -1,87 +1,85 @@
-export interface WeddingEvent {
-  id: string;
-  name: string;
-  date: string;
-}
+import { WeddingEvent, Task, Phase, Stakeholder, Reminder, Activity, Risk, WeddingInfo, BudgetCategory, BudgetUpdate, BudgetWatchout, BudgetScenario } from "../lib/models/schema";
 
-export interface Task {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: "not_started" | "in_progress" | "done" | "at_risk" | "overdue";
-  phase: string;
-  phaseId: string;
-  owner: string;
-  ownerInitials: string;
-  ownerType: "couple" | "vendor" | "family";
-  category: string;
-  dependencies: string[];
-  blocks: string[];
-  whyItMatters: string;
-  notes: string;
-  vendorPortalLink?: string;
-}
 
-export interface Phase {
-  id: string;
-  name: string;
-  dateRange: string;
-  taskCount: number;
-  atRisk: number;
-  color: string;
-}
-
-export interface Stakeholder {
-  id: string;
-  name: string;
-  role: string;
-  type: "vendor" | "family";
-  initials: string;
-  taskCount: number;
-  overdue: number;
-  waitingOn: number;
-  progress: number;
-  nextTask: string;
-  nextTaskDue: string;
-  email: string;
-  tasks: string[];
-}
-
-export interface Reminder {
-  id: string;
-  recipient: string;
-  role: string;
-  channel: "email" | "whatsapp" | "sms";
-  task: string;
-  status: "scheduled" | "sent" | "viewed" | "responded";
-  scheduledFor: string;
-}
-
-export interface Activity {
-  id: string;
-  timestamp: string;
-  description: string;
-  icon: "vendor" | "couple" | "system";
-  actor: string;
-}
-
-export interface Risk {
-  id: string;
-  title: string;
-  explanation: string;
-  impact: string;
-  cta: string;
-  severity: "high" | "medium";
-}
-
-export const weddingInfo = {
+export const weddingInfo: WeddingInfo = {
   coupleName: "Priya & Arjun",
-  brideName: "Priya Sharma",
-  groomName: "Arjun Mehta",
-  weddingDate: "November 8, 2025",
+  partner1Name: "Priya",
+  partner2Name: "Arjun",
+  weddingDate: "December 20, 2026",
   city: "Mumbai",
-  daysLeft: 208,
+  location: "Mumbai",
+  daysLeft: 244,
+  budget: "₹30L",
+  guests: "300",
+  planningPace: "marathon",
+  budgetPhase: "dreaming",
+  activeScenarioId: "scen-1",
 };
+
+export const budgetCategories: BudgetCategory[] = [
+  { id: "bc1", name: "Venue", planned: 800000, forecast: 800000, actual: 800000, confidence: "high", trend: "stable", priority: "must_have" },
+  { id: "bc2", name: "Catering", planned: 900000, forecast: 950000, actual: 0, confidence: "low", notes: "Per-plate quote pending", trend: "up", driftAmount: 50000, priority: "must_have" },
+  { id: "bc3", name: "Decor", planned: 400000, forecast: 470000, actual: 0, confidence: "low", notes: "Floral scope unconfirmed", trend: "up", driftAmount: 70000, priority: "nice_to_have" },
+  { id: "bc4", name: "Photography", planned: 350000, forecast: 350000, actual: 350000, confidence: "high", trend: "stable", priority: "must_have" },
+  { id: "bc5", name: "Attire", planned: 250000, forecast: 250000, actual: 50000, confidence: "medium", trend: "stable", priority: "must_have" },
+  { id: "bc6", name: "Invitations", planned: 80000, forecast: 85000, actual: 0, confidence: "medium", trend: "up", driftAmount: 5000, priority: "nice_to_have" },
+  { id: "bc7", name: "Entertainment", planned: 120000, forecast: 120000, actual: 0, confidence: "medium", trend: "stable", priority: "nice_to_have" },
+  { id: "bc8", name: "Transport", planned: 80000, forecast: 90000, actual: 0, confidence: "low", notes: "Guest count not final", trend: "up", driftAmount: 10000, priority: "nice_to_have" },
+  { id: "bc9", name: "Misc", planned: 70000, forecast: 55000, actual: 0, confidence: "medium", trend: "down", driftAmount: -15000, priority: "nice_to_have" },
+];
+
+export const budgetUpdates: BudgetUpdate[] = [
+  { id: "bu1", categoryName: "Decor", amount: 70000, date: "2026-04-09", description: "Expanded floral scope per latest concept", type: "increase" },
+  { id: "bu2", categoryName: "Catering", amount: 50000, date: "2026-04-07", description: "Guest count revised upward by 20", type: "increase" },
+  { id: "bu3", categoryName: "Misc", amount: -15000, date: "2026-04-01", description: "Reduced contingency reallocation", type: "reallocation" },
+];
+
+export const budgetWatchouts: BudgetWatchout[] = [
+  { id: "bw1", title: "Decor budget drift", description: "Decor estimate is 18% above plan based on the latest scope.", severity: "high" },
+];
+
+export const budgetScenarios: BudgetScenario[] = [
+  {
+    id: "scen-1",
+    name: "Intimate Affair",
+    description: "Focus on close family and premium quality over guest count.",
+    totalBudget: 2000000,
+    categories: {
+      "bc1": 600000,
+      "bc2": 500000,
+      "bc3": 300000,
+      "bc4": 200000
+    },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "scen-2",
+    name: "Grand Celebration",
+    description: "The dream wedding with 500+ guests and multiple events.",
+    totalBudget: 4500000,
+    categories: {
+      "bc1": 1500000,
+      "bc2": 1200000,
+      "bc3": 800000,
+      "bc4": 400000
+    },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "scen-3",
+    name: "Minimalist & Chic",
+    description: "A modern, sustainable approach with meaningful details.",
+    totalBudget: 1500000,
+    categories: {
+      "bc1": 400000,
+      "bc2": 400000,
+      "bc3": 200000,
+      "bc4": 150000
+    },
+    createdAt: new Date().toISOString()
+  }
+];
+
 
 export const phases: Phase[] = [
   {
@@ -134,15 +132,22 @@ export const tasks: Task[] = [
     status: "at_risk",
     phase: "Foundation",
     phaseId: "foundation",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Venue",
-    dependencies: [],
-    blocks: ["t3", "t5", "t8"],
+    dependencies: ["t2"],
+    blocks: ["t3", "t5", "t8", "t4"],
     whyItMatters: "Venue locks the date for all vendor bookings and sets the capacity constraint for invitations.",
     notes: "Three venues shortlisted: The Leela, ITC Maratha, Taj Lands End. Awaiting availability confirmation.",
     vendorPortalLink: undefined,
+    priority: "high",
+    effort: 4,
+    estimatedCost: 800000,
+    actualCost: 800000,
+    isMilestone: true,
+    budgetCategoryId: "bc1",
+    customActionType: "venue_shortlist"
   },
   {
     id: "t2",
@@ -151,15 +156,18 @@ export const tasks: Task[] = [
     status: "overdue",
     phase: "Foundation",
     phaseId: "foundation",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Guests",
     dependencies: [],
-    blocks: ["t1", "t4"],
+    blocks: ["t1", "t6"],
     whyItMatters: "Guest count determines venue capacity, catering quantity, and invitation print run.",
     notes: "Current estimate: 280 guests. Family is still adding names.",
     vendorPortalLink: undefined,
+    priority: "high",
+    effort: 3,
+    customActionType: "guest_count"
   },
   {
     id: "t3",
@@ -172,27 +180,34 @@ export const tasks: Task[] = [
     ownerInitials: "SC",
     ownerType: "vendor",
     category: "Food",
-    dependencies: ["t2", "t1"],
+    dependencies: ["t1"],
     blocks: ["t9"],
-    whyItMatters: "Caterer must be confirmed before invitations can mention menu or dietary RSVP.",
-    notes: "Three caterers contacted. Suresh Events is the preferred choice.",
-    vendorPortalLink: "/vendor-portal",
+    whyItMatters: "Catering is one of the biggest budget items and requires early booking for premium dates.",
+    notes: "Waiting for venue confirmation.",
+    priority: "high",
+    effort: 2,
+    estimatedCost: 900000,
+    budgetCategoryId: "bc2",
+    isMilestone: true
   },
   {
     id: "t4",
-    title: "Send save-the-date to outstation guests",
-    dueDate: "2025-05-01",
+    title: "Pay venue deposit",
+    dueDate: "2025-05-10",
     status: "not_started",
     phase: "Foundation",
     phaseId: "foundation",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 2",
+    ownerInitials: "P2",
     ownerType: "couple",
-    category: "Guests",
-    dependencies: ["t2"],
+    category: "Finance",
+    dependencies: ["t1"],
     blocks: ["t7"],
-    whyItMatters: "Outstation guests need at least 6 months for travel planning.",
-    notes: "",
+    whyItMatters: "Booking is not official until deposit is cleared.",
+    notes: "Need to transfer ₹5L via NEFT",
+    priority: "high",
+    effort: 1,
+    estimatedCost: 500000
   },
   {
     id: "t5",
@@ -209,7 +224,12 @@ export const tasks: Task[] = [
     blocks: [],
     whyItMatters: "Top photographers book 12 months in advance. Waiting longer risks losing preferred vendors.",
     notes: "Portfolio review done. Contract review in progress.",
-    vendorPortalLink: "/vendor-portal",
+    vendorPortalLink: "/vendor-portal/t5",
+    estimatedCost: 350000,
+    actualCost: 350000,
+    budgetCategoryId: "bc4",
+    priority: "high",
+    effort: 4,
   },
   {
     id: "t6",
@@ -218,14 +238,19 @@ export const tasks: Task[] = [
     status: "not_started",
     phase: "Vendor Locking",
     phaseId: "vendor-locking",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Invitations",
-    dependencies: ["t3", "t2"],
+    dependencies: ["t2"],
     blocks: ["t7"],
     whyItMatters: "Physical invitations require 4 weeks for printing and delivery.",
-    notes: "",
+    notes: "Waiting on final count to print cards",
+    priority: "medium",
+    effort: 3,
+    estimatedCost: 85000,
+    budgetCategoryId: "bc6",
+    customActionType: "invitation_designs"
   },
   {
     id: "t7",
@@ -239,9 +264,11 @@ export const tasks: Task[] = [
     ownerType: "family",
     category: "Guests",
     dependencies: ["t6", "t4"],
-    blocks: [],
+    blocks: ["t12"],
     whyItMatters: "Invitations must go out 3 months before to allow RSVP time.",
     notes: "",
+    priority: "low",
+    effort: 2,
   },
   {
     id: "t8",
@@ -250,14 +277,18 @@ export const tasks: Task[] = [
     status: "not_started",
     phase: "Vendor Locking",
     phaseId: "vendor-locking",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Decor",
     dependencies: ["t1"],
     blocks: [],
     whyItMatters: "Decorator needs venue floor plan and 5 months lead time for custom elements.",
     notes: "",
+    estimatedCost: 470000,
+    budgetCategoryId: "bc3",
+    priority: "high",
+    effort: 3,
   },
   {
     id: "t9",
@@ -266,14 +297,16 @@ export const tasks: Task[] = [
     status: "not_started",
     phase: "Finalization",
     phaseId: "finalization",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Food",
     dependencies: ["t3"],
     blocks: [],
     whyItMatters: "Caterer requires confirmed numbers 3 weeks before the event.",
     notes: "",
+    priority: "high",
+    effort: 1,
   },
   {
     id: "t10",
@@ -290,6 +323,8 @@ export const tasks: Task[] = [
     blocks: [],
     whyItMatters: "Mehendi artists for large functions book early during wedding season.",
     notes: "",
+    priority: "medium",
+    effort: 2,
   },
   {
     id: "t11",
@@ -298,14 +333,16 @@ export const tasks: Task[] = [
     status: "not_started",
     phase: "Ceremony & Rituals",
     phaseId: "ceremony-planning",
-    owner: "Priya & Arjun",
-    ownerInitials: "PA",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
     ownerType: "couple",
     category: "Rituals",
     dependencies: [],
     blocks: [],
     whyItMatters: "Sangeet choreography requires 2 months of practice.",
     notes: "",
+    priority: "medium",
+    effort: 5,
   },
   {
     id: "t12",
@@ -322,6 +359,8 @@ export const tasks: Task[] = [
     blocks: [],
     whyItMatters: "25+ relatives flying in need coordinated pickup 3 days before the event.",
     notes: "",
+    priority: "low",
+    effort: 4,
   },
 ];
 
@@ -333,7 +372,7 @@ export const nextSteps = [
     daysLeft: -2,
     isOverdue: true,
     reason: "Guest count is 2 days overdue and blocks venue finalization and caterer booking.",
-    blocks: ["Venue shortlist", "Caterer booking", "Save-the-dates"],
+    blocks: ["Venue shortlist", "Caterer booking", "Invitations"],
     taskId: "t2",
   },
   {
@@ -354,7 +393,7 @@ export const nextSteps = [
     isOverdue: false,
     reason: "45 guests are traveling from abroad. They need 6+ months to arrange travel.",
     blocks: ["Guest RSVP tracking", "Hotel block booking"],
-    taskId: "t4",
+    taskId: "t6",
   },
 ];
 
@@ -524,9 +563,9 @@ export const activities: Activity[] = [
   {
     id: "a4",
     timestamp: "2025-04-12 14:30",
-    description: "Priya marked 'Initial venue research' as done",
+    description: "Partner 1 marked 'Initial venue research' as done",
     icon: "couple",
-    actor: "Priya",
+    actor: "Partner 1",
   },
   {
     id: "a5",
@@ -538,9 +577,9 @@ export const activities: Activity[] = [
   {
     id: "a6",
     timestamp: "2025-04-10 18:00",
-    description: "Arjun assigned airport logistics task to Raj Mehta",
+    description: "Partner 2 assigned airport logistics task to Raj Mehta",
     icon: "couple",
-    actor: "Arjun",
+    actor: "Partner 2",
   },
 ];
 
@@ -552,6 +591,7 @@ export const risks: Risk[] = [
     impact: "Blocks 3 downstream tasks including venue booking and save-the-dates.",
     cta: "Update guest count now",
     severity: "high",
+    type: "general",
   },
   {
     id: "risk2",
@@ -560,6 +600,7 @@ export const risks: Risk[] = [
     impact: "Losing preferred venues could cascade into decor, catering, and photography changes.",
     cta: "Schedule site visits",
     severity: "high",
+    type: "density",
   },
   {
     id: "risk3",
@@ -568,13 +609,14 @@ export const risks: Risk[] = [
     impact: "Peak-season photographers may accept other bookings while contract is pending.",
     cta: "Send follow-up to photographer",
     severity: "medium",
+    type: "general",
   },
 ];
 
 export const adminEvents = [
   {
     id: "ae1",
-    coupleName: "Priya & Arjun",
+    coupleName: "Partner 1 & Partner 2",
     weddingDate: "Nov 8, 2025",
     tasksCompleted: 18,
     totalTasks: 77,
@@ -617,7 +659,7 @@ export const adminEvents = [
 export const stuckMilestones = [
   {
     id: "sm1",
-    coupleName: "Priya & Arjun",
+    coupleName: "Partner 1 & Partner 2",
     task: "Confirm guest count",
     blockedSince: "5 days",
     blockReason: "Family additions pending",

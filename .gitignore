@@ -47,3 +47,34 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Environments and local secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Scratch and Temporary files
+scratch/
+artifacts/**/scratch/
+artifacts/**/.env.local
+
+# Agent related (optional, but often local)
+.agents/
+artifacts/wedding-orchestrator/.agents/
+
+# Research, Brainstorming, and Reference Documents
+*.md
+!README.md
+!artifacts/**/README.md
+DESIGN.md
+AGENTS.md
+GEMINI.md
+*.subtask_*.md
+subtask_*.md
+Research and Planning/
+Product-Strategy-Deck/
+Carousel-Architect/
+Dummy Data/
+pw-test/

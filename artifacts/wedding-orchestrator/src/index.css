@@ -181,10 +181,6 @@
     @apply hidden;
   }
 
-  .font-serif-display {
-    font-family: var(--app-font-serif);
-  }
-
   .no-default-hover-elevate {}
   .no-default-active-elevate {}
 
@@ -242,4 +238,36 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after {
     inset: -1px;
   }
+
+  .noise-bg {
+    position: relative;
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.035;
+      pointer-events: none;
+      z-index: 1000;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+  }
+}
+
+/* Custom utilities registered for Tailwind v4 JIT */
+@utility font-serif-display {
+  font-family: var(--app-font-serif);
+}
+
+@utility text-serif-gradient {
+  font-family: var(--app-font-serif);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to bottom right, hsl(var(--foreground)), hsl(var(--foreground) / 0.7));
+}
+
+@utility animate-spin-slow {
+  animation: spin 3s linear infinite;
 }

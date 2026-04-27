@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { stakeholders, tasks, type Stakeholder } from "@/data/mockData";
+import { type Stakeholder } from "@/data/mockData";
+import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 import { X, Bell, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 const tabs = ["All", "Vendors", "Family & Friends"];
 
 export default function Stakeholders() {
+  const stakeholders = useStore(state => state.stakeholders);
   const [activeTab, setActiveTab] = useState("All");
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filtered = stakeholders.filter((s) => {
     if (activeTab === "Vendors") return s.type === "vendor";
@@ -22,12 +30,18 @@ export default function Stakeholders() {
     <Layout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-xl lg:text-2xl font-semibold text-foreground">Stakeholder Hub</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+        <motion.div 
+          initial={mounted ? { opacity: 0, y: 10 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl lg:text-4xl font-serif-display text-serif-gradient leading-tight">
+            Stakeholder Hub
+          </h1>
+          <p className="text-muted-foreground text-sm mt-2 font-medium">
             Everyone responsible for something, in one place.
           </p>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit mb-6">
@@ -154,6 +168,7 @@ function StakeholderDetail({
   onClose: () => void;
   onOpenTask: (id: string) => void;
 }) {
+  const tasks = useStore(state => state.tasks);
   const stakeholderTasks = tasks.filter((t) => stakeholder.tasks.includes(t.id));
 
   return (

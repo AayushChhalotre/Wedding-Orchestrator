@@ -1,8 +1,10 @@
 import { Layout } from "@/components/Layout";
-import { reminders, activities, type Reminder } from "@/data/mockData";
-import { useState } from "react";
+import { type Reminder } from "@/data/mockData";
+import { useStore } from "@/store/useStore";
+import { useState, useEffect } from "react";
 import { Mail, MessageCircle, Phone, RefreshCw, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const statusConfig: Record<Reminder["status"], { label: string; color: string }> = {
   scheduled: { label: "Scheduled", color: "bg-muted text-muted-foreground" },
@@ -20,18 +22,32 @@ const channelIcon: Record<Reminder["channel"], React.FC<{ size?: number; classNa
 const tabs = ["Reminders", "Activity"];
 
 export default function Reminders() {
+  const reminders = useStore(state => state.reminders);
+  const activities = useStore(state => state.activities);
+  const sendReminder = useStore(state => state.sendReminder);
   const [activeTab, setActiveTab] = useState("Reminders");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-xl lg:text-2xl font-semibold text-foreground">Reminders & Activity</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+        <motion.div 
+          initial={mounted ? { opacity: 0, y: 10 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl lg:text-4xl font-serif-display text-serif-gradient leading-tight">
+            Reminders & Activity
+          </h1>
+          <p className="text-muted-foreground text-sm mt-2 font-medium">
             Track what's been sent, seen, and responded to.
           </p>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit mb-6">
@@ -91,7 +107,7 @@ export default function Reminders() {
                           <span className="capitalize">{reminder.channel}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">{reminder.scheduledFor}</span>
-                        <button className="ml-auto text-muted-foreground hover:text-foreground" data-testid={`btn-resend-${reminder.id}`}>
+                        <button onClick={() => sendReminder(reminder.id)} className="ml-auto text-muted-foreground hover:text-foreground" data-testid={`btn-resend-${reminder.id}`}>
                           <RefreshCw size={13} />
                         </button>
                       </div>
@@ -112,6 +128,7 @@ export default function Reminders() {
                         {status.label}
                       </span>
                       <button
+                        onClick={() => sendReminder(reminder.id)}
                         className="text-muted-foreground hover:text-foreground transition-colors"
                         title="Resend"
                         data-testid={`btn-resend-${reminder.id}`}

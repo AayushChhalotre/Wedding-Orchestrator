@@ -1,17 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Check, ChevronRight, Calendar, MapPin, Users, Wallet, Heart, Sparkles } from "lucide-react";
+import { Check, ChevronRight, Calendar, MapPin, Users, Wallet, Heart, Compass, History, ShieldCheck, Search, CheckCircle2, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/store/useStore";
+import { WeddingGraphic } from "@/components/WeddingGraphics";
+import { comboPacks } from "@/lib/combo-packs";
+import { Step1Vision } from "./Onboarding/Step1Vision";
+import { Step2Basics } from "./Onboarding/Step2Basics";
+import { Step3Events } from "./Onboarding/Step3Events";
+import { Step4AlreadyDone } from "./Onboarding/Step4AlreadyDone";
+
 
 const steps = [
-  { id: 1, label: "Basics" },
-  { id: 2, label: "Events" },
-  { id: 3, label: "Already done" },
+  { id: 1, label: "Vision" },
+  { id: 2, label: "Basics" },
+  { id: 3, label: "Events" },
+  { id: 4, label: "Already done" },
 ];
 
-const guestBands = ["Under 100", "100–200", "200–300", "300+"];
+const leadershipModels = [
+  { id: "couple", title: "We're deciding", description: "You and your partner make the key decisions.", icon: Heart },
+  { id: "parent", title: "Parents are steering", description: "Parents or elders are steering the ship.", icon: Users },
+  { id: "family", title: "It's a family effort", description: "A collaborative effort across the whole family.", icon: Compass },
+];
+
+const guestBands = ["Under 100", "100–200", "200–300", "300–600", "600–1000", "1000+"];
 const budgetBands = ["Under ₹10L", "₹10L–₹25L", "₹25L–₹50L", "₹50L+"];
 const weddingTypes = ["Hindu", "Christian", "Muslim", "Sikh", "Other", "Mixed / Multi-faith"];
+const rashis = [
+  "Mesh (Aries)", "Vrishabh (Taurus)", "Mithun (Gemini)", 
+  "Kark (Cancer)", "Simha (Leo)", "Kanya (Virgo)", 
+  "Tula (Libra)", "Vrishchik (Scorpio)", "Dhanu (Sagittarius)", 
+  "Makar (Capricorn)", "Kumbh (Aquarius)", "Meen (Pisces)"
+];
 const eventTypes = ["Haldi", "Mehendi", "Sangeet", "Wedding", "Reception"];
 const alreadyDone = [
   "Venue booked",
@@ -21,30 +43,144 @@ const alreadyDone = [
   "None yet — starting fresh",
 ];
 
+
+
+
 export default function Onboarding() {
+
+
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
+  const [mounted, setMounted] = useState(false);
 
-  // Step 1 state
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { 
+    weddingInfo, 
+    updateWeddingInfo, 
+    generateTimeline, 
+    analyzeWhatsApp, 
+    whatsAppAnalysisStatus: whatsAppStatus,
+    statusTracking,
+    leadershipModel,
+    setLeadershipModel,
+    whatsAppErrorMessage: whatsAppError
+  } = useStore();
+
   const [weddingDate, setWeddingDate] = useState("");
   const [city, setCity] = useState("");
   const [guestBand, setGuestBand] = useState("");
   const [budgetBand, setBudgetBand] = useState("");
+  const [partner1, setPartner1] = useState("");
+  const [partner2, setPartner2] = useState("");
 
-  // Step 2 state
+  // Step 3 state
   const [weddingType, setWeddingType] = useState("");
+  const [partner1Rashi, setPartner1Rashi] = useState("");
+  const [partner2Rashi, setPartner2Rashi] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>(["Wedding"]);
   const [multiDay, setMultiDay] = useState(false);
   const [destination, setDestination] = useState(false);
 
-  // Step 3 state
+  // Step 4 state
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  
+  // Custom Events
+  const [customEventInput, setCustomEventInput] = useState("");
+  const [customEvents, setCustomEvents] = useState<string[]>([]);
+
+  // Extraction Data Points
+  const potentialGuests = useStore(state => state.potentialGuestList);
+
+  // Auto-sync extracted data to UI state
+  useEffect(() => {
+    if (whatsAppStatus === "completed") {
+      if (weddingInfo.budget) {
+        const budgetValue = weddingInfo.budget.toLowerCase();
+        if (budgetValue.includes("l")) {
+          const num = parseFloat(budgetValue.replace(/[^0-9.]/g, ""));
+          if (!isNaN(num)) {
+            if (num < 10) setBudgetBand(budgetBands[0]);
+            else if (num <= 25) setBudgetBand(budgetBands[1]);
+            else if (num <= 50) setBudgetBand(budgetBands[2]);
+            else setBudgetBand(budgetBands[3]);
+          }
+        }
+      }
+      
+      if (weddingInfo.location) setCity(weddingInfo.location);
+      if (weddingInfo.weddingDate) {
+        setWeddingDate(weddingInfo.weddingDate);
+      }
+      if (weddingInfo.guests) {
+        const normalized = weddingInfo.guests.replace("-", "–");
+        if (guestBands.includes(normalized)) {
+          setGuestBand(normalized);
+        } else {
+          // Robust numeric mapping
+          const num = parseInt(normalized.split(/[–-]/)[0].replace(/[^0-9]/g, ""));
+          if (!isNaN(num)) {
+            if (num < 100) setGuestBand(guestBands[0]);
+            else if (num < 200) setGuestBand(guestBands[1]);
+            else if (num < 300) setGuestBand(guestBands[2]);
+            else if (num < 600) setGuestBand(guestBands[3]);
+            else if (num < 1000) setGuestBand(guestBands[4]);
+            else setGuestBand(guestBands[5]);
+          }
+        }
+      }
+      
+      if (weddingInfo.partner1Name) setPartner1(weddingInfo.partner1Name);
+      if (weddingInfo.partner2Name) setPartner2(weddingInfo.partner2Name);
+
+      if (weddingInfo.weddingType && weddingTypes.includes(weddingInfo.weddingType)) {
+        setWeddingType(weddingInfo.weddingType);
+      } else if (weddingInfo.weddingType && weddingInfo.weddingType.toLowerCase().includes("hindu")) {
+        setWeddingType("Hindu");
+      }
+
+      if (statusTracking?.multiDay !== undefined) setMultiDay(statusTracking.multiDay);
+      if (statusTracking?.destination !== undefined) setDestination(statusTracking.destination);
+    }
+  }, [whatsAppStatus, weddingInfo, statusTracking]);
+
+  const addCustomEvent = () => {
+    if (customEventInput.trim() && customEvents.length < 5) {
+      const newEvent = customEventInput.trim();
+      if (!selectedEvents.includes(newEvent) && !eventTypes.includes(newEvent)) {
+        setCustomEvents([...customEvents, newEvent]);
+        setSelectedEvents([...selectedEvents, newEvent]);
+      }
+      setCustomEventInput("");
+    }
+  };
+
+  const removeCustomEvent = (event: string) => {
+    setCustomEvents(customEvents.filter(ce => ce !== event));
+    setSelectedEvents(selectedEvents.filter(se => se !== event));
+  };
 
   const toggleEvent = (event: string) => {
     setSelectedEvents((prev) =>
       prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event]
     );
   };
+
+  useEffect(() => {
+    if (whatsAppStatus === "completed" && statusTracking) {
+      const itemsToTick: string[] = [];
+      if (statusTracking.venueBooked) itemsToTick.push("Venue booked");
+      if (statusTracking.catererBooked) itemsToTick.push("Caterer booked");
+      if (statusTracking.photoBooked) itemsToTick.push("Photographer booked");
+      if (statusTracking.plannerHired) itemsToTick.push("Wedding planner hired");
+      
+      if (itemsToTick.length > 0) {
+        setCheckedItems(prev => Array.from(new Set([...prev, ...itemsToTick])));
+      }
+    }
+  }, [whatsAppStatus, statusTracking]);
 
   const toggleChecked = (item: string) => {
     setCheckedItems((prev) =>
@@ -53,12 +189,67 @@ export default function Onboarding() {
   };
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
-    else setLocation("/generating");
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      // Step 4 is final
+      updateWeddingInfo({
+        weddingDate,
+        city,
+        guests: guestBand,
+        budget: budgetBand,
+        partner1Name: partner1,
+        partner2Name: partner2,
+        weddingType,
+        partner1Rashi: partner1Rashi as any,
+        partner2Rashi: partner2Rashi as any,
+      });
+
+      // Save events to store
+      const addEvent = useStore.getState().addEvent;
+      const existingEvents = useStore.getState().events;
+      
+      selectedEvents.forEach(eventName => {
+        const alreadyExists = existingEvents.some(e => e.name === eventName);
+        if (!alreadyExists) {
+          // Find matching combo pack for the event name
+          const match = comboPacks.find(p => p.name.toLowerCase().includes(eventName.toLowerCase()) || eventName.toLowerCase().includes(p.id));
+          
+          addEvent({
+            id: crypto.randomUUID(),
+            name: eventName,
+            theme: match?.theme || "",
+            vibe: match?.vibe || "",
+            guestCount: parseInt(guestBand.replace(/[^0-9]/g, "")) || 0,
+            duration: "",
+            colors: match?.colors || ["#E5E7EB", "#D1D5DB", "#9CA3AF"],
+            gallery: match?.gallery || [],
+            locationType: "indoor"
+          });
+        }
+      });
+
+      generateTimeline({ 
+        weddingDate, 
+        partner1, 
+        partner2,
+        tradition: weddingType,
+        partner1Rashi,
+        partner2Rashi
+      });
+      setLocation("/generating");
+    }
+  };
+
+  const onFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await analyzeWhatsApp(file);
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row relative">
+
       {/* Left: Form */}
       <div className="flex-1 flex flex-col min-h-screen lg:min-h-0">
         {/* Header */}
@@ -73,11 +264,11 @@ export default function Onboarding() {
             </span>
           </div>
 
-          <h1 className="font-serif-display text-3xl lg:text-4xl text-foreground leading-tight">
-            Let's build your<br />wedding plan.
+          <h1 className="font-serif-display text-4xl lg:text-5xl text-serif-gradient leading-tight">
+            Let's find<br />your rhythm.
           </h1>
-          <p className="text-muted-foreground text-sm mt-2">
-            2 minutes to your personalised timeline.
+          <p className="text-muted-foreground text-sm mt-2 font-medium">
+            A few quick prompts to shape your vision.
           </p>
         </div>
 
@@ -119,223 +310,73 @@ export default function Onboarding() {
         {/* Form card */}
         <div className="flex-1 px-6 lg:px-12 pb-28 lg:pb-12">
           <div className="max-w-lg">
-            {step === 1 && (
-              <div className="space-y-5">
-                <p className="text-sm text-muted-foreground mb-4">
-                  A few basics so we can build around your date and scale.
-                </p>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    <Calendar size={13} className="inline mr-1.5 -mt-0.5" />
-                    Wedding date
-                  </label>
-                  <input
-                    type="date"
-                    value={weddingDate}
-                    onChange={(e) => setWeddingDate(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    data-testid="input-wedding-date"
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={mounted ? { opacity: 0, x: 10 } : false}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                {step === 1 && (
+                  <Step1Vision 
+                    onNext={() => handleNext()} 
                   />
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    <MapPin size={13} className="inline mr-1.5 -mt-0.5" />
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Mumbai, Jaipur, Delhi…"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    data-testid="input-city"
+                {step === 2 && (
+                  <Step2Basics 
+                    data={{
+                      partner1,
+                      partner2,
+                      weddingDate,
+                      city,
+                      guestBand,
+                      budgetBand
+                    }}
+                    updateData={(updates) => {
+                      if (updates.partner1 !== undefined) setPartner1(updates.partner1);
+                      if (updates.partner2 !== undefined) setPartner2(updates.partner2);
+                      if (updates.weddingDate !== undefined) setWeddingDate(updates.weddingDate);
+                      if (updates.city !== undefined) setCity(updates.city);
+                      if (updates.guestBand !== undefined) setGuestBand(updates.guestBand);
+                      if (updates.budgetBand !== undefined) setBudgetBand(updates.budgetBand);
+                    }}
                   />
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    <Users size={13} className="inline mr-1.5 -mt-0.5" />
-                    Expected guests
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {guestBands.map((band) => (
-                      <button
-                        key={band}
-                        onClick={() => setGuestBand(band)}
-                        className={cn(
-                          "px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
-                          guestBand === band
-                            ? "border-primary bg-primary/8 text-primary"
-                            : "border-border bg-card text-foreground hover:border-primary/40"
-                        )}
-                        data-testid={`chip-guest-${band.replace(/[^a-z0-9]/gi, "").toLowerCase()}`}
-                      >
-                        {band}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {step === 3 && (
+                  <Step3Events 
+                    data={{
+                      weddingType,
+                      partner1Rashi,
+                      partner2Rashi,
+                      selectedEvents,
+                      multiDay,
+                      destination,
+                      partner1Name: partner1,
+                      partner2Name: partner2
+                    }}
+                    updateData={(updates) => {
+                      if (updates.weddingType !== undefined) setWeddingType(updates.weddingType);
+                      if (updates.partner1Rashi !== undefined) setPartner1Rashi(updates.partner1Rashi);
+                      if (updates.partner2Rashi !== undefined) setPartner2Rashi(updates.partner2Rashi);
+                      if (updates.selectedEvents !== undefined) setSelectedEvents(updates.selectedEvents);
+                      if (updates.multiDay !== undefined) setMultiDay(updates.multiDay);
+                      if (updates.destination !== undefined) setDestination(updates.destination);
+                    }}
+                  />
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    <Wallet size={13} className="inline mr-1.5 -mt-0.5" />
-                    Budget range
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {budgetBands.map((band) => (
-                      <button
-                        key={band}
-                        onClick={() => setBudgetBand(band)}
-                        className={cn(
-                          "px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
-                          budgetBand === band
-                            ? "border-primary bg-primary/8 text-primary"
-                            : "border-border bg-card text-foreground hover:border-primary/40"
-                        )}
-                        data-testid={`chip-budget-${band.replace(/[^a-z0-9]/gi, "").toLowerCase()}`}
-                      >
-                        {band}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-5">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Tell us about the type and structure of your celebration.
-                </p>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    <Heart size={13} className="inline mr-1.5 -mt-0.5" />
-                    Type of wedding
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {weddingTypes.map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setWeddingType(type)}
-                        className={cn(
-                          "px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left",
-                          weddingType === type
-                            ? "border-primary bg-primary/8 text-primary"
-                            : "border-border bg-card text-foreground hover:border-primary/40"
-                        )}
-                        data-testid={`chip-type-${type.toLowerCase().replace(/[^a-z0-9]/gi, "")}`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Events (select all that apply)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {eventTypes.map((event) => (
-                      <button
-                        key={event}
-                        onClick={() => toggleEvent(event)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full border text-sm font-medium transition-all",
-                          selectedEvents.includes(event)
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-card text-foreground hover:border-primary/40"
-                        )}
-                        data-testid={`chip-event-${event.toLowerCase()}`}
-                      >
-                        {event}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-1">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <div
-                      onClick={() => setMultiDay(!multiDay)}
-                      className={cn(
-                        "w-10 h-6 rounded-full transition-colors relative cursor-pointer",
-                        multiDay ? "bg-primary" : "bg-border"
-                      )}
-                    >
-                      <div className={cn(
-                        "absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform",
-                        multiDay ? "translate-x-5" : "translate-x-1"
-                      )} />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Multi-day celebration</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <div
-                      onClick={() => setDestination(!destination)}
-                      className={cn(
-                        "w-10 h-6 rounded-full transition-colors relative cursor-pointer",
-                        destination ? "bg-primary" : "bg-border"
-                      )}
-                    >
-                      <div className={cn(
-                        "absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform",
-                        destination ? "translate-x-5" : "translate-x-1"
-                      )} />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Destination wedding</span>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-4">
-                  What's already locked in? We'll skip those steps in your plan.
-                </p>
-
-                <div className="space-y-2">
-                  {alreadyDone.map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => toggleChecked(item)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left",
-                        checkedItems.includes(item)
-                          ? "border-primary bg-primary/8 text-primary"
-                          : "border-border bg-card text-foreground hover:border-primary/30"
-                      )}
-                      data-testid={`checkbox-${item.toLowerCase().replace(/[^a-z0-9]/gi, "").substring(0, 15)}`}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all",
-                        checkedItems.includes(item)
-                          ? "border-primary bg-primary"
-                          : "border-border"
-                      )}>
-                        {checkedItems.includes(item) && <Check size={12} className="text-white" />}
-                      </div>
-                      {item}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-4 rounded-lg bg-muted/50 border border-border mt-4">
-                  <div className="flex items-start gap-2">
-                    <Sparkles size={14} className="text-primary mt-0.5 shrink-0" />
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      We'll generate a personalised timeline with{" "}
-                      {selectedEvents.length > 0 ? selectedEvents.join(", ") : "your"} events,
-                      tailored to what's already been booked.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+                {step === 4 && (
+                  <Step4AlreadyDone 
+                    checkedItems={checkedItems}
+                    toggleChecked={toggleChecked}
+                    selectedEvents={selectedEvents}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
 
@@ -356,43 +397,152 @@ export default function Onboarding() {
               className="flex-1 lg:flex-none lg:min-w-[180px] flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
               data-testid="btn-next"
             >
-              {step < 3 ? "Continue" : "Generate my timeline"}
+              {step < 4 ? "Continue" : "Generate my timeline"}
               <ChevronRight size={15} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Right: Illustration placeholder (desktop only) */}
-      <div className="hidden lg:flex flex-col w-96 xl:w-[480px] bg-sidebar items-center justify-center px-10 py-12 shrink-0">
-        <div className="text-center">
-          <div className="relative mx-auto mb-8 w-48 h-48">
-            {/* Abstract rings motif */}
-            <div className="absolute inset-0 rounded-full border-2 border-sidebar-primary/30 animate-pulse" />
-            <div className="absolute inset-4 rounded-full border border-sidebar-primary/20" />
-            <div className="absolute inset-8 rounded-full border border-sidebar-foreground/10" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className="font-serif-display text-sidebar-foreground text-2xl leading-tight">
-                  {step === 1 ? "Your Date" : step === 2 ? "Your Day" : "Your Plan"}
-                </div>
-                <div className="text-sidebar-foreground/50 text-xs mt-1">awaits</div>
-              </div>
+      {/* Right: Dynamic Preview (desktop only) */}
+      <div className="hidden lg:flex flex-col w-96 xl:w-[420px] bg-sidebar sticky top-0 h-screen items-center justify-start gap-12 px-10 py-16 shrink-0 border-l border-border relative overflow-hidden">
+        
+        {/* Subtle background gradient based on step */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none transition-colors duration-1000 ease-in-out" 
+          style={{
+            background: step === 1 ? 'radial-gradient(circle at top right, var(--sidebar-primary), transparent 70%)' :
+                        step === 2 ? 'radial-gradient(circle at bottom right, var(--sidebar-primary), transparent 70%)' :
+                        step === 3 ? 'radial-gradient(circle at bottom left, var(--sidebar-primary), transparent 70%)' :
+                        'radial-gradient(circle at center, var(--sidebar-primary), transparent 70%)'
+          }}
+        />
+
+        {mounted && (
+          <div className="relative w-full aspect-[4/5] max-h-[520px] flex items-center justify-center p-0">
+            <WeddingGraphic 
+              type={step === 1 && (whatsAppStatus === 'processing' || whatsAppStatus === 'analyzing') ? "whatsapp" : "onboarding"} 
+              className="absolute inset-0 rounded-[40px] shadow-2xl"
+              partner1={partner1}
+              partner2={partner2}
+            />
+            
+            <div className="absolute inset-0 flex items-center justify-center translate-y-32">
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={step}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="bg-white/90 backdrop-blur-xl px-8 py-4 rounded-2xl shadow-xl border border-white/50 text-center"
+                >
+                  <div className="font-serif-display text-primary text-3xl">
+                    {step === 1 ? "Vision" : step === 2 ? "Basics" : step === 3 ? "Events" : "Build"}
+                  </div>
+                  <div className="text-muted-foreground text-[10px] uppercase tracking-[0.2em] mt-1 font-bold">
+                    Phase {step} of 4
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
+        )}
 
-          {/* Preview card */}
-          <div className="bg-sidebar-accent/40 rounded-xl p-4 text-left border border-sidebar-border">
-            <p className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest mb-3">Timeline preview</p>
-            {["Foundation · Apr–May", "Vendor Locking · May–Jul", "Guest Management · Jun–Aug", "Ceremony Prep · Aug–Oct", "Final Week · Nov"].map((item, i) => (
-              <div key={i} className={cn(
-                "flex items-center gap-2 py-1.5 text-xs",
-                i < 2 ? "text-sidebar-foreground" : "text-sidebar-foreground/40"
-              )}>
-                <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", i < 2 ? "bg-sidebar-primary" : "bg-sidebar-foreground/20")} />
-                {item}
+          {/* Dynamic Wedding Profile Preview */}
+          <div className="bg-sidebar-accent/30 rounded-2xl p-6 text-left border border-sidebar-border/50 w-full backdrop-blur-sm shadow-sm">
+            <p className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest mb-5 font-semibold">Your Wedding Profile</p>
+            
+            <div className="space-y-5">
+              <div className="flex items-start gap-3">
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors duration-500", step > 1 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" : "bg-sidebar-foreground/5 text-sidebar-foreground/30")}>
+                  <Heart size={13} />
+                </div>
+                <div className="flex-1">
+                  <div className={cn("text-xs font-bold tracking-wide uppercase transition-colors duration-500", step > 1 ? "text-sidebar-foreground" : "text-sidebar-foreground/40")}>The Vision</div>
+                  {leadershipModel ? (
+                    <div className="text-[11px] text-sidebar-foreground/70 mt-1 flex items-center gap-1">
+                      {leadershipModels.find(m => m.id === leadershipModel)?.title || "Deciding together"}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-sidebar-foreground/40 mt-1 italic">Who's steering the ship?</div>
+                  )}
+                </div>
               </div>
-            ))}
+
+              <div className="flex items-start gap-3">
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors duration-500", step > 2 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" : "bg-sidebar-foreground/5 text-sidebar-foreground/30")}>
+                  <MapPin size={13} />
+                </div>
+                <div className="flex-1">
+                  <div className={cn("text-xs font-bold tracking-wide uppercase transition-colors duration-500", step > 2 ? "text-sidebar-foreground" : "text-sidebar-foreground/40")}>The Basics</div>
+                  {city || guestBand || budgetBand || weddingDate || partner1 || partner2 ? (
+                    <div className="text-[11px] text-sidebar-foreground/70 mt-1 space-y-1">
+                      {(partner1 || partner2) && <div className="font-medium text-sidebar-foreground">{partner1 || "Partner 1"} & {partner2 || "Partner 2"}</div>}
+                      <div className="flex flex-wrap gap-1.5 opacity-90 pt-0.5">
+                        {city && <span className="inline-flex px-1.5 py-0.5 bg-sidebar-background rounded text-[10px] border border-sidebar-border">{city}</span>}
+                        {guestBand && <span className="inline-flex px-1.5 py-0.5 bg-sidebar-background rounded text-[10px] border border-sidebar-border">{guestBand}</span>}
+                        {budgetBand && <span className="inline-flex px-1.5 py-0.5 bg-sidebar-background rounded text-[10px] border border-sidebar-border">{budgetBand}</span>}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-sidebar-foreground/40 mt-1 italic">Where, when, and how many?</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors duration-500", step > 3 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" : "bg-sidebar-foreground/5 text-sidebar-foreground/30")}>
+                  <History size={13} />
+                </div>
+                <div className="flex-1">
+                  <div className={cn("text-xs font-bold tracking-wide uppercase transition-colors duration-500", step > 3 ? "text-sidebar-foreground" : "text-sidebar-foreground/40")}>The Celebration</div>
+                  {weddingType || selectedEvents.length > 0 ? (
+                    <div className="text-[11px] text-sidebar-foreground/70 mt-1 space-y-1">
+                      {weddingType && <div className="font-medium text-sidebar-foreground">{weddingType} {destination ? "· Destination" : ""}</div>}
+                      <div className="flex flex-wrap gap-1.5 opacity-90 pt-0.5">
+                        {selectedEvents.slice(0, 3).map(e => (
+                          <span key={e} className="inline-flex px-1.5 py-0.5 bg-sidebar-background rounded text-[10px] border border-sidebar-border">{e}</span>
+                        ))}
+                        {selectedEvents.length > 3 && (
+                          <span className="inline-flex px-1.5 py-0.5 bg-sidebar-background rounded text-[10px] border border-sidebar-border">+{selectedEvents.length - 3} more</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-sidebar-foreground/40 mt-1 italic">Traditions and events</div>
+                  )}
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {step >= 4 && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="flex items-start gap-3"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                      <CheckCircle2 size={13} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs font-bold tracking-wide uppercase text-sidebar-foreground">Current Status</div>
+                      <div className="text-[11px] text-sidebar-foreground/70 mt-1">
+                        {checkedItems.length > 0 && !checkedItems.includes("None yet — starting fresh") ? (
+                          <div className="flex flex-col gap-1">
+                            {checkedItems.map(item => (
+                              <div key={item} className="flex items-center gap-1.5">
+                                <Check size={10} className="text-sidebar-primary shrink-0" />
+                                <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="italic">Starting fresh with a clean slate</span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
           </div>
         </div>
       </div>

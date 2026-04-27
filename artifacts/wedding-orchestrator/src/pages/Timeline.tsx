@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { tasks, phases, type Task } from "@/data/mockData";
+import { type Task } from "@/data/mockData";
+import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Link2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const statusConfig = {
   not_started: { label: "Not started", color: "bg-muted text-muted-foreground" },
@@ -23,6 +25,13 @@ export default function Timeline() {
   const [ownerFilter, setOwnerFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [collapsedPhases, setCollapsedPhases] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const tasks = useStore(state => state.tasks);
+  const phases = useStore(state => state.phases);
 
   const togglePhase = (phaseId: string) => {
     setCollapsedPhases((prev) =>
@@ -59,35 +68,44 @@ export default function Timeline() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <motion.div 
+          initial={mounted ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6"
+        >
           <div>
-            <h1 className="text-xl lg:text-2xl font-semibold text-foreground">Timeline</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {tasks.length} tasks across {phases.length} phases
+            <h1 className="text-4xl lg:text-5xl font-serif-display text-serif-gradient leading-tight tracking-tight">
+              Timeline
+            </h1>
+            <p className="text-muted-foreground text-sm mt-3 font-medium tracking-wide">
+              {tasks.length} tasks across {phases.length} phases · Orchestrating the perfect sequence
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-2 bg-muted rounded-lg p-1">
-            <button className="px-3 py-1.5 text-xs font-medium bg-card rounded text-foreground shadow-sm">List</button>
-            <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Phases</button>
+          <div className="hidden sm:flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
+            <button className="px-4 py-1.5 text-xs font-bold bg-background rounded-lg text-foreground shadow-sm border border-border/20">List</button>
+            <button className="px-4 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">Phases</button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Filter row */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-4 mb-10 pb-6 border-b border-border/40">
           <FilterGroup
             label="Status"
             options={statusFilters}
             value={statusFilter}
             onChange={setStatusFilter}
           />
+          <div className="h-8 w-px bg-border/40 self-center hidden md:block" />
           <FilterGroup
             label="Owner"
             options={ownerFilters}
             value={ownerFilter}
             onChange={setOwnerFilter}
           />
+          <div className="h-8 w-px bg-border/40 self-center hidden md:block" />
           <FilterGroup
             label="Category"
             options={categoryFilters}
@@ -97,56 +115,87 @@ export default function Timeline() {
         </div>
 
         {/* Task list grouped by phase */}
-        <div className="space-y-6">
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+          initial="hidden"
+          animate="visible"
+          className="space-y-8"
+        >
           {tasksByPhase.map(({ phase, tasks: phaseTasks }) => {
             if (phaseTasks.length === 0) return null;
             const isCollapsed = collapsedPhases.includes(phase.id);
 
             return (
-              <div key={phase.id} data-testid={`phase-group-${phase.id}`}>
+              <motion.div 
+                key={phase.id} 
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { 
+                    opacity: 1, 
+                    y: 0,
+                    transition: { type: "spring", stiffness: 260, damping: 20 }
+                  }
+                }}
+                data-testid={`phase-group-${phase.id}`}
+              >
                 {/* Phase header - sticky on desktop */}
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.995 }}
                   onClick={() => togglePhase(phase.id)}
-                  className="sticky top-0 z-10 w-full flex items-center gap-3 px-4 py-2.5 bg-muted/90 backdrop-blur-sm rounded-lg border border-border mb-2 hover:bg-muted transition-colors"
+                  className="sticky top-0 z-10 w-full flex items-center gap-4 px-5 py-3.5 bg-background/80 backdrop-blur-xl rounded-2xl border border-border/60 mb-4 hover:border-primary/20 hover:bg-muted/50 transition-all shadow-sm"
                   data-testid={`phase-header-${phase.id}`}
                 >
                   <ChevronDown
-                    size={14}
+                    size={16}
                     className={cn(
                       "text-muted-foreground transition-transform shrink-0",
                       isCollapsed ? "-rotate-90" : "rotate-0"
                     )}
                   />
-                  <span className="text-sm font-semibold text-foreground">{phase.name}</span>
-                  <span className="text-xs text-muted-foreground">{phase.dateRange}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">{phaseTasks.length} tasks</span>
+                  <span className="text-sm font-bold text-foreground tracking-tight">{phase.name}</span>
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest">{phase.dateRange}</span>
+                  <span className="ml-auto text-xs font-bold text-muted-foreground">{phaseTasks.length} tasks</span>
                   {phase.atRisk > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full font-bold border border-amber-200/50">
                       {phase.atRisk} at risk
                     </span>
                   )}
-                </button>
+                </motion.button>
 
                 {!isCollapsed && (
-                  <div className="space-y-1">
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-2 px-1"
+                  >
                     {/* Desktop: table-like header */}
-                    <div className="hidden lg:grid grid-cols-[1fr_140px_120px_120px_32px] gap-4 px-4 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                      <span>Task</span>
-                      <span>Due date</span>
-                      <span>Status</span>
-                      <span>Owner</span>
+                    <div className="hidden lg:grid grid-cols-[1fr_140px_120px_120px_32px] gap-4 px-6 py-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 font-bold">
+                      <span>Task Details</span>
+                      <span>Timeline</span>
+                      <span>Progress</span>
+                      <span>Assignee</span>
                       <span />
                     </div>
 
-                    {phaseTasks.map((task) => (
-                      <TaskRow key={task.id} task={task} onOpen={() => setOpenTaskId(task.id)} />
-                    ))}
-                  </div>
+                    <div className="space-y-2">
+                      {phaseTasks.map((task) => (
+                        <TaskRow key={task.id} task={task} onOpen={() => setOpenTaskId(task.id)} />
+                      ))}
+                    </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
 
       {openTaskId && (
@@ -160,52 +209,54 @@ function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
   const status = statusConfig[task.status];
 
   return (
-    <button
+    <motion.button
+      whileHover={{ x: 4, backgroundColor: "var(--muted)" }}
+      whileTap={{ scale: 0.995 }}
       onClick={onOpen}
-      className="w-full bg-card border border-card-border rounded-lg px-4 py-3 hover:border-primary/30 hover:bg-muted/30 transition-all text-left"
+      className="w-full bg-card border border-card-border rounded-xl px-5 py-4 transition-all text-left shadow-sm group"
       data-testid={`task-row-${task.id}`}
     >
       {/* Mobile layout */}
       <div className="lg:hidden">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">{task.title}</p>
-          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 mt-0.5", status.color)}>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <p className="text-sm font-bold text-foreground leading-snug line-clamp-2 tracking-tight">{task.title}</p>
+          <span className={cn("text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0 mt-0.5 border", status.color, "border-current/10")}>
             {status.label}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
           <span>{new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-          <span>·</span>
+          <span className="text-muted-foreground/30">·</span>
           <span>{task.owner}</span>
           {task.dependencies.length > 0 && (
-            <Link2 size={11} className="ml-auto" />
+            <Link2 size={12} className="ml-auto text-primary/60" />
           )}
         </div>
       </div>
 
       {/* Desktop layout: table-like grid */}
       <div className="hidden lg:grid grid-cols-[1fr_140px_120px_120px_32px] gap-4 items-center">
-        <div className="flex items-center gap-2 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <p className="text-sm font-bold text-foreground truncate tracking-tight">{task.title}</p>
           {task.dependencies.length > 0 && (
-            <Link2 size={12} className="text-muted-foreground shrink-0" />
+            <Link2 size={13} className="text-primary/40 shrink-0 group-hover:text-primary/70 transition-colors" />
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
         </p>
-        <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium w-fit", status.color)}>
+        <span className={cn("text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider w-fit border", status.color, "border-current/10")}>
           {status.label}
         </span>
-        <div className="flex items-center gap-1.5 min-w-0">
-          <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center text-primary text-[9px] font-bold shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
             {task.ownerInitials}
           </div>
-          <span className="text-xs text-muted-foreground truncate">{task.owner}</span>
+          <span className="text-xs font-bold text-muted-foreground truncate">{task.owner}</span>
         </div>
-        <span className="text-muted-foreground text-xs">›</span>
+        <span className="text-muted-foreground/40 text-sm group-hover:text-primary group-hover:translate-x-1 transition-all">›</span>
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -221,23 +272,25 @@ function FilterGroup({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-xs text-muted-foreground font-medium">{label}:</span>
-      {options.map((opt) => (
-        <button
-          key={opt}
-          onClick={() => onChange(opt)}
-          className={cn(
-            "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-            value === opt
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-          )}
-          data-testid={`filter-${label.toLowerCase()}-${opt.toLowerCase().replace(/\s+/g, "-")}`}
-        >
-          {opt}
-        </button>
-      ))}
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.15em]">{label}:</span>
+      <div className="flex items-center gap-1.5">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
+              value === opt
+                ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/10"
+                : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+            )}
+            data-testid={`filter-${label.toLowerCase()}-${opt.toLowerCase().replace(/\s+/g, "-")}`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
