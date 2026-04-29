@@ -167,6 +167,47 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* Sparsh Insight: Serene Mode (> 6 Months) */
+.mode-serene {
+  --background: 210 20% 98%; /* Soft Indigo/White */
+  --foreground: 220 25% 20%;
+  --primary: 225 35% 45%;    /* Soft Indigo */
+  --accent: 145 25% 90%;     /* Sage Green accent */
+  --card: 210 25% 99%;
+  --app-font-sans: 'Cormorant Garamond', serif;
+  --radius: 2rem;            /* Softer corners */
+  --sidebar: 225 40% 12%;
+}
+
+/* Sparsh Insight: Balanced Mode (2-6 Months) */
+.mode-balanced {
+  --background: 42 30% 96%;  /* Warm Ivory (Existing) */
+  --foreground: 220 20% 18%;
+  --primary: 182 42% 32%;    /* Deep Teal */
+  --accent: 42 65% 78%;      /* Muted Gold */
+  --card: 42 40% 98%;
+  --app-font-sans: 'Inter', sans-serif;
+  --radius: 1rem;
+}
+
+/* Sparsh Insight: Velocity Mode (< 2 Months) */
+.mode-velocity {
+  --background: 220 15% 10%; /* Dark Slate */
+  --foreground: 210 20% 98%;
+  --primary: 38 90% 55%;     /* High-contrast Amber */
+  --secondary: 220 20% 20%;
+  --accent: 38 90% 55%;
+  --muted: 220 15% 15%;
+  --muted-foreground: 220 10% 60%;
+  --card: 220 20% 12%;
+  --card-border: 220 20% 18%;
+  --border: 220 20% 18%;
+  --input: 220 20% 20%;
+  --app-font-sans: 'Inter', sans-serif;
+  --radius: 0.5rem;          /* Sharp, focused corners */
+  --sidebar: 225 50% 5%;
+}
+
 @layer base {
   * {
     @apply border-border;

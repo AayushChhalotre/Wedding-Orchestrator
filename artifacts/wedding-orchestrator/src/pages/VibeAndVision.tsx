@@ -6,7 +6,10 @@ import { Plus, MapPin, Users, Clock, Trash2, Camera, Palette, Zap, Music, Shirt,
 import { cn } from "@/lib/utils";
 import { comboPacks, ComboPack } from "@/lib/combo-packs";
 import { VisionNarrativeEditor } from "@/components/VisionNarrativeEditor";
+import { CommunicationComposer } from "@/components/CommunicationComposer";
 import { toast } from "sonner";
+import { Share, User } from "lucide-react";
+import { Stakeholder } from "@/lib/models/schema";
 
 
 export default function VibeAndVision() {
@@ -14,11 +17,15 @@ export default function VibeAndVision() {
   const addEvent = useStore(state => state.addEvent);
   const updateEvent = useStore(state => state.updateEvent);
   const removeEvent = useStore(state => state.removeEvent);
+  const stakeholders = useStore(state => state.stakeholders || []);
   
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [newEventName, setNewEventName] = useState("");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
+  const [isStakeholderPickerOpen, setIsStakeholderPickerOpen] = useState(false);
 
   const generateVisionSummary = useStore(state => state.generateVisionSummary);
 
@@ -132,6 +139,13 @@ export default function VibeAndVision() {
                 <span className="relative z-10">{isPreviewMode ? "Editing View" : "Preview Mode"}</span>
                 {!isPreviewMode && <motion.div layoutId="btn-bg" className="absolute inset-0 bg-primary/5 group-hover/btn:bg-primary/10 transition-colors" />}
               </button>
+              <button
+                onClick={() => setIsStakeholderPickerOpen(true)}
+                className="px-5 py-2.5 rounded-full bg-indigo-600 text-white flex items-center gap-2 hover:bg-indigo-700 transition-all font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-indigo-500/20"
+              >
+                <Share size={16} />
+                Share Vision
+              </button>
               <div className="px-5 py-2.5 bg-primary/5 rounded-full border border-primary/10 flex items-center gap-2 backdrop-blur-sm">
                 <div className="relative">
                   <Palette size={16} className="text-primary" />
@@ -141,6 +155,72 @@ export default function VibeAndVision() {
             </div>
           </div>
         </motion.div>
+
+        {/* Stakeholder Picker Modal */}
+        <AnimatePresence>
+          {isStakeholderPickerOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsStakeholderPickerOpen(false)}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-md bg-card border border-border rounded-[2.5rem] shadow-2xl overflow-hidden noise-bg p-8"
+              >
+                <h3 className="text-2xl font-serif-display text-serif-gradient mb-2">Share Your Vision</h3>
+                <p className="text-sm text-muted-foreground mb-8">Select a stakeholder to align them with your vision.</p>
+                
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+                  {stakeholders.length > 0 ? (
+                    stakeholders.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => {
+                          setSelectedStakeholder(s);
+                          setIsStakeholderPickerOpen(false);
+                          setIsComposerOpen(true);
+                        }}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-muted/30 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                          <User size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm">{s.name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.type}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-center py-8 text-muted-foreground italic text-sm">No stakeholders added yet.</p>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => setIsStakeholderPickerOpen(false)}
+                  className="w-full mt-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Communication Composer Modal */}
+        {isComposerOpen && selectedStakeholder && (
+          <CommunicationComposer
+            stakeholder={selectedStakeholder}
+            isOpen={isComposerOpen}
+            onClose={() => setIsComposerOpen(false)}
+          />
+        )}
 
         {/* Tab Bar */}
         <div className="flex items-center gap-3 mb-12 overflow-x-auto pb-4 scrollbar-hide border-b border-border/40 relative">

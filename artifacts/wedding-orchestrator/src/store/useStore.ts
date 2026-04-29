@@ -207,6 +207,7 @@ export interface AppState {
   };
   generateVisionSummary: (eventId: string) => void;
   suggestPlanningPace: (daysLeft: number) => PlanningPace;
+  getAestheticMode: () => "serene" | "balanced" | "velocity";
 }
 
 /**
@@ -668,10 +669,28 @@ export const useStore = create<AppState>()(
 
   sendReminder: (reminderId) => {
     set((state) => {
+      const reminder = state.reminders.find((r) => r.id === reminderId);
+      if (!reminder) return state;
+
       const newReminders = state.reminders.map((r) =>
-        r.id === reminderId ? { ...r, status: "sent" as const } : r
+        r.id === reminderId ? { ...r, status: "sent" as const, lastSent: new Date().toISOString() } : r
       );
-      return { reminders: newReminders };
+
+      const task = state.tasks.find(t => t.id === reminder.taskId);
+
+      return { 
+        reminders: newReminders,
+        activities: [
+          {
+            id: `a${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            description: `Sent a gentle nudge for: ${task?.title || "pending item"}`,
+            icon: "reminder",
+            actor: "System",
+          },
+          ...state.activities,
+        ]
+      };
     });
   },
 
@@ -809,6 +828,13 @@ export const useStore = create<AppState>()(
       }
     }));
     get().detectAdvancedRisks();
+  },
+
+  getAestheticMode: () => {
+    const daysLeft = get().weddingInfo.daysLeft;
+    if (daysLeft > 180) return "serene";
+    if (daysLeft < 60) return "velocity";
+    return "balanced";
   },
 
   lockEventDate: (eventName, date) => {

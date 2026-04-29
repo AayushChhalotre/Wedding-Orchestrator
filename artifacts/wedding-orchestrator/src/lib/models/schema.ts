@@ -106,6 +106,7 @@ export interface Stakeholder {
   nextTask: string;
   nextTaskDue: string;
   email: string;
+  phone?: string;
   tasks: string[];
 }
 

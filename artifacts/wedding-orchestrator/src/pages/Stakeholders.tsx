@@ -4,8 +4,10 @@ import { TaskDrawer } from "@/components/TaskDrawer";
 import { type Stakeholder } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
-import { X, Bell, ChevronRight } from "lucide-react";
+import { X, Bell, ChevronRight, MessageSquare, Eye, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { CommunicationComposer } from "@/components/CommunicationComposer";
+import { Button } from "@/components/ui/button";
 
 const tabs = ["All", "Vendors", "Family & Friends"];
 
@@ -14,6 +16,7 @@ export default function Stakeholders() {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -80,11 +83,20 @@ export default function Stakeholders() {
           stakeholder={selectedStakeholder}
           onClose={() => setSelectedStakeholder(null)}
           onOpenTask={(id) => setOpenTaskId(id)}
+          onOpenComposer={() => setIsComposerOpen(true)}
         />
       )}
 
       {openTaskId && (
         <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
+      )}
+
+      {selectedStakeholder && (
+        <CommunicationComposer
+          stakeholder={selectedStakeholder}
+          isOpen={isComposerOpen}
+          onClose={() => setIsComposerOpen(false)}
+        />
       )}
     </Layout>
   );
@@ -163,13 +175,16 @@ function StakeholderDetail({
   stakeholder,
   onClose,
   onOpenTask,
+  onOpenComposer,
 }: {
   stakeholder: Stakeholder;
   onClose: () => void;
   onOpenTask: (id: string) => void;
+  onOpenComposer: () => void;
 }) {
   const tasks = useStore(state => state.tasks);
   const stakeholderTasks = tasks.filter((t) => stakeholder.tasks.includes(t.id));
+  const [isHandoffPreviewOpen, setIsHandoffPreviewOpen] = useState(false);
 
   return (
     <>
@@ -221,26 +236,39 @@ function StakeholderDetail({
           <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Their tasks</h3>
           <div className="space-y-2">
             {stakeholderTasks.map((task) => (
-              <button
-                key={task.id}
-                onClick={() => onOpenTask(task.id)}
-                className="w-full flex items-center gap-2.5 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-left"
-                data-testid={`stakeholder-task-${task.id}`}
-              >
-                <div className={cn(
-                  "w-2 h-2 rounded-full shrink-0",
-                  task.status === "done" ? "bg-green-500" :
-                  task.status === "in_progress" ? "bg-primary" :
-                  task.status === "overdue" ? "bg-destructive" :
-                  task.status === "at_risk" ? "bg-amber-500" :
-                  "bg-muted-foreground/40"
-                )} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
-                  <p className="text-xs text-muted-foreground">Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
-                </div>
-                <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-              </button>
+              <div key={task.id} className="group relative">
+                <button
+                  onClick={() => onOpenTask(task.id)}
+                  className="w-full flex items-center gap-2.5 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors text-left"
+                  data-testid={`stakeholder-task-${task.id}`}
+                >
+                  <div className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    task.status === "done" ? "bg-green-500" :
+                    task.status === "in_progress" ? "bg-primary" :
+                    task.status === "overdue" ? "bg-destructive" :
+                    task.status === "at_risk" ? "bg-amber-500" :
+                    "bg-muted-foreground/40"
+                  )} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">Due {new Date(task.dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+                  </div>
+                  <ChevronRight size={14} className="text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+                
+                {task.status !== "done" && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useStore.getState().snoozeTask(task.id, 7);
+                    }}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-600 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider"
+                  >
+                    Snooze
+                  </button>
+                )}
+              </div>
             ))}
 
             {stakeholderTasks.length === 0 && (
@@ -249,16 +277,140 @@ function StakeholderDetail({
           </div>
         </div>
 
-        <div className="border-t border-border px-6 py-4">
+        <div className="border-t border-border px-6 py-4 space-y-3">
+          {stakeholder.type === "vendor" && (
+            <button
+              onClick={() => setIsHandoffPreviewOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-border text-foreground text-xs font-bold rounded-xl hover:bg-muted transition-all shadow-sm"
+              data-testid="btn-preview-handoff"
+            >
+              <Eye size={14} />
+              Preview Handoff
+            </button>
+          )}
           <button
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-            data-testid="btn-send-reminder"
+            onClick={onOpenComposer}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+            data-testid="btn-open-composer"
           >
-            <Bell size={14} />
-            Send reminder
+            <MessageSquare size={16} />
+            Message {stakeholder.name.split(" ")[0]}
           </button>
         </div>
       </div>
+
+      {isHandoffPreviewOpen && (
+        <HandoffPreviewModal 
+          stakeholder={stakeholder} 
+          onClose={() => setIsHandoffPreviewOpen(false)} 
+          onSend={onOpenComposer}
+        />
+      )}
     </>
+  );
+}
+
+function HandoffPreviewModal({ stakeholder, onClose, onSend }: { stakeholder: Stakeholder, onClose: () => void, onSend: () => void }) {
+  const weddingInfo = useStore(state => state.weddingInfo);
+  const events = useStore(state => state.events);
+  const tasks = useStore(state => state.tasks);
+  const generateVisionSummary = useStore(state => state.generateVisionSummary);
+  const stakeholderTasks = tasks.filter(t => stakeholder.tasks.includes(t.id));
+
+  // Auto-generate summaries for events if they don't exist
+  useEffect(() => {
+    events.forEach(e => {
+      if (!e.visionSummary) {
+        generateVisionSummary(e.id);
+      }
+    });
+  }, [events, generateVisionSummary]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-lg bg-card border border-border rounded-[2rem] shadow-2xl overflow-hidden noise-bg"
+      >
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-serif-display text-serif-gradient">Handoff Dossier</h2>
+              <p className="text-xs text-muted-foreground mt-1 font-medium italic">What {stakeholder.name} will see</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+            <section className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+              <h4 className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">The Foundation</h4>
+              <p className="text-sm font-bold">{weddingInfo.coupleName}</p>
+              <p className="text-xs text-muted-foreground mt-1">{weddingInfo.weddingDate ? new Date(weddingInfo.weddingDate).toLocaleDateString() : 'Date TBD'} • {weddingInfo.city}</p>
+            </section>
+
+            <section>
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Scope of Work</h4>
+              <div className="space-y-2">
+                {stakeholderTasks.map(t => (
+                  <div key={t.id} className="flex items-center gap-2 text-xs font-medium">
+                    <CheckCircle2 size={12} className="text-primary" />
+                    <span>{t.title}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Event Vision</h4>
+              <div className="space-y-3">
+                {events.slice(0, 2).map(e => (
+                  <div key={e.id} className="p-4 rounded-xl bg-muted border border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-bold">{e.name}</p>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase">{e.vibe || 'Serene'}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+                      "{e.visionSummary || e.vibe || "A unique celebration tailored to our story."}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="p-4 rounded-2xl border border-dashed border-border flex items-center justify-center">
+              <p className="text-[10px] text-muted-foreground font-medium italic">+ Dynamic timeline & moodboard links included</p>
+            </section>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-border flex gap-3">
+             <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-muted text-foreground text-xs font-bold rounded-xl hover:bg-muted/80 transition-all"
+            >
+              Back to Edit
+            </button>
+            <button
+              onClick={() => {
+                onClose();
+                onSend();
+              }}
+              className="flex-1 px-4 py-3 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+            >
+              Approve & Message
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

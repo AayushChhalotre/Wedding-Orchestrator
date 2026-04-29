@@ -412,6 +412,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Confirm menu by 10 May",
     nextTaskDue: "2025-05-10",
     email: "suresh@catering.com",
+    phone: "919876543210",
     tasks: ["t3", "t9"],
   },
   {
@@ -427,6 +428,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Sign contract by 15 May",
     nextTaskDue: "2025-05-15",
     email: "rishi@rkphotography.in",
+    phone: "919988776655",
     tasks: ["t5"],
   },
   {
@@ -442,6 +444,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Distribute invitations by 1 Aug",
     nextTaskDue: "2025-08-01",
     email: "mama@sharma.com",
+    phone: "919000111222",
     tasks: ["t7"],
   },
   {
@@ -457,6 +460,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Book mehendi artist by 15 Jun",
     nextTaskDue: "2025-06-15",
     email: "sunita@mehta.com",
+    phone: "919333444555",
     tasks: ["t10"],
   },
   {
@@ -472,6 +476,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Arrange airport pickups by 5 Nov",
     nextTaskDue: "2025-11-05",
     email: "raj@mehta.com",
+    phone: "919666777888",
     tasks: ["t12"],
   },
   {
@@ -487,6 +492,7 @@ export const stakeholders: Stakeholder[] = [
     nextTask: "Submit concept proposal by 1 Jun",
     nextTaskDue: "2025-06-01",
     email: "hello@bloomthread.in",
+    phone: "919111222333",
     tasks: ["t8"],
   },
 ];

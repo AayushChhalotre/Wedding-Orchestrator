@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Upload, Circle, ArrowLeft } from "lucide-react";
+import { Check, ChevronDown, Upload, Circle, ArrowLeft, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
@@ -148,10 +148,21 @@ export default function VendorPortal() {
           <h2 className="text-3xl lg:text-4xl font-serif-display text-serif-gradient leading-tight mb-3">
             {taskTitle}
           </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed font-medium max-w-lg">
+          <p className="text-sm text-muted-foreground leading-relaxed font-medium max-w-lg mb-6">
             We need a few details to finalize this request. This takes
             5–10 minutes. All information will be shared only with {weddingInfo.coupleName}.
           </p>
+
+          {/* Vision alignment preview */}
+          <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Vision Alignment Active</p>
+              <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">Your services will be matched against our "Serene Flora" aesthetic.</p>
+            </div>
+          </div>
         </div>
 
         {/* Accordion sections */}
@@ -252,10 +263,10 @@ export default function VendorPortal() {
               submitVendorData(routeTaskId);
               setSubmitted(true);
             }}
-            className="flex-1 px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="flex-1 px-6 py-4 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
             data-testid="btn-vendor-submit"
           >
-            Submit details
+            Confirm & Finalize Handoff
           </button>
           <button className="px-6 py-3 bg-card border border-border text-foreground text-sm font-medium rounded-lg hover:bg-muted/50 transition-colors">
             Save as draft
