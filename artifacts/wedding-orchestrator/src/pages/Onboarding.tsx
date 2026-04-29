@@ -309,7 +309,7 @@ export default function Onboarding() {
 
         {/* Form card */}
         <div className="flex-1 px-6 lg:px-12 pb-28 lg:pb-12">
-          <div className="max-w-lg">
+          <div className={cn("transition-all duration-300 w-full", step === 1 ? "max-w-3xl" : "max-w-lg")}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}

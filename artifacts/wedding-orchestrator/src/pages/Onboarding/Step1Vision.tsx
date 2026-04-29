@@ -32,46 +32,48 @@ export function Step1Vision({ onNext }: Step1VisionProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-muted-foreground mb-4">
-        Who is shaping the vision? Decisions feel different depending on who's leading.
-      </p>
+    <div className="space-y-8 md:space-y-0 md:grid md:grid-cols-2 md:gap-8">
+      <div className="space-y-6">
+        <p className="text-sm text-muted-foreground mb-4">
+          Who is shaping the vision? Decisions feel different depending on who's leading.
+        </p>
 
-      <div className="space-y-3">
-        {leadershipModels.map((model) => (
-          <button
-            key={model.id}
-            onClick={() => setLeadershipModel(model.id as any)}
-            className={cn(
-              "w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all group",
-              leadershipModel === model.id
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "border-border bg-card hover:border-primary/30"
-            )}
-          >
-            <div className={cn(
-              "p-2 rounded-lg shrink-0 transition-colors",
-              leadershipModel === model.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
-            )}>
-              <model.icon size={18} />
-            </div>
-            <div>
-              <div className="font-medium text-sm text-foreground">{model.title}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{model.description}</div>
-            </div>
-          </button>
-        ))}
+        <div className="space-y-3">
+          {leadershipModels.map((model) => (
+            <button
+              key={model.id}
+              onClick={() => setLeadershipModel(model.id as any)}
+              className={cn(
+                "w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all group",
+                leadershipModel === model.id
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border bg-card hover:border-primary/30"
+              )}
+            >
+              <div className={cn(
+                "p-2 rounded-lg shrink-0 transition-colors",
+                leadershipModel === model.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
+              )}>
+                <model.icon size={18} />
+              </div>
+              <div>
+                <div className="font-medium text-sm text-foreground">{model.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{model.description}</div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="pt-4">
-        <div className="relative">
+      <div className="pt-2 md:pt-0">
+        <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
           <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-4 text-muted-foreground font-medium">Skip the typing</span></div>
         </div>
         
-        <div className="mt-4 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center transition-all hover:bg-primary/[0.07] overflow-hidden group/whatsapp">
-          <div className="relative h-[34rem] mb-8 rounded-2xl overflow-hidden shadow-inner ring-1 ring-primary/10">
-            <WeddingGraphic type="whatsapp" className="w-full h-full" />
+        <div className="p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center transition-all hover:bg-primary/[0.07] overflow-hidden group/whatsapp flex flex-col justify-center h-full min-h-[320px]">
+          <div className="relative h-40 sm:h-48 mb-6 rounded-2xl overflow-hidden shadow-inner ring-1 ring-primary/10 shrink-0">
+            <WeddingGraphic type="whatsapp" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent pointer-events-none" />
           </div>
           <h3 className="text-sm font-bold text-foreground">Import your local story</h3>
