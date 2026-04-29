@@ -1,4 +1,4 @@
-import { Task } from "@/data/mockData";
+import { Task } from "@/lib/models/schema";
 
 export type TaskStatus = "not_started" | "in_progress" | "done" | "at_risk" | "overdue" | "blocked";
 
@@ -22,7 +22,7 @@ export class DependencyEngine {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task || task.dependencies.length === 0) return false;
 
-    return task.dependencies.some((depId) => {
+    return task.dependencies.some((depId: string) => {
       const depTask = this.tasks.find((t) => t.id === depId);
       return depTask && depTask.status !== "done";
     });
@@ -38,7 +38,7 @@ export class DependencyEngine {
     if (task.status === "done") return "done";
     if (this.isBlocked(taskId)) return "blocked";
 
-    return task.status;
+    return task.status as TaskStatus;
   }
 
   /**
@@ -49,16 +49,16 @@ export class DependencyEngine {
     if (!task || !this.isBlocked(taskId)) return null;
 
     const blockingTasks = task.dependencies
-      .map((depId) => this.tasks.find((t) => t.id === depId))
+      .map((depId: string) => this.tasks.find((t) => t.id === depId))
       .filter((t): t is Task => !!t && t.status !== "done");
 
     const explanation = blockingTasks.length > 0
-      ? `This task is waiting on ${blockingTasks.map(t => `'${t.title}'`).join(", ")} before it can be started.`
+      ? `This task is waiting on ${blockingTasks.map((t: Task) => `'${t.title}'`).join(", ")} before it can be started.`
       : "";
 
     return {
       taskId,
-      blockedBy: blockingTasks.map(t => t.id),
+      blockedBy: blockingTasks.map((t: Task) => t.id),
       explanation
     };
   }
@@ -75,13 +75,13 @@ export class DependencyEngine {
       if (!task) return 0;
       
       let count = task.blocks.length;
-      task.blocks.forEach(blockedId => {
+      task.blocks.forEach((blockedId: string) => {
         count += countBlocks(blockedId);
       });
       return count;
     };
 
-    this.tasks.forEach(t => {
+    this.tasks.forEach((t: Task) => {
       blockCounts[t.id] = countBlocks(t.id);
     });
 

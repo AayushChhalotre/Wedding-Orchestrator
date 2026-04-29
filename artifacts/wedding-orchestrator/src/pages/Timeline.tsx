@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { type Task } from "@/data/mockData";
+import { type Task, type TaskStatus } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Link2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const statusConfig = {
+const statusConfig: Record<TaskStatus, { label: string; color: string }> = {
   not_started: { label: "Not started", color: "bg-muted text-muted-foreground" },
   in_progress: { label: "In progress", color: "bg-primary/10 text-primary" },
   done: { label: "Done", color: "bg-green-100 text-green-700" },
   at_risk: { label: "At risk", color: "bg-amber-100 text-amber-700" },
   overdue: { label: "Overdue", color: "bg-destructive/10 text-destructive" },
+  blocked: { label: "Blocked", color: "bg-orange-100 text-orange-700" },
 };
 
 const statusFilters = ["All", "Not started", "In progress", "Done", "At risk"];
@@ -206,7 +207,7 @@ export default function Timeline() {
 }
 
 function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
-  const status = statusConfig[task.status];
+  const status = statusConfig[task.status as TaskStatus];
 
   return (
     <motion.button

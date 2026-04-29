@@ -25,6 +25,8 @@ export function BudgetDetailDrawer({ categoryId, onClose }: BudgetDetailDrawerPr
   const [newTaskNotes, setNewTaskNotes] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [newEstimate, setNewEstimate] = useState("");
 
   const completedTasks = useMemo(() => tasks.filter(t => t.status === 'done').length, [tasks]);
   const progress = useMemo(() => tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0, [completedTasks, tasks.length]);
@@ -98,7 +100,7 @@ export function BudgetDetailDrawer({ categoryId, onClose }: BudgetDetailDrawerPr
     if (task.status === 'done') {
       completeTask(task.id);
     } else {
-      const costInput = window.prompt(`Final cost for "${task.title}"?`, task.estimatedCost.toString());
+      const costInput = window.prompt(`Final cost for "${task.title}"?`, (task.estimatedCost ?? 0).toString());
       if (costInput !== null) {
         const actual = parseFloat(costInput) || 0;
         completeTaskWithBudget(task.id, actual);
@@ -358,23 +360,23 @@ export function BudgetDetailDrawer({ categoryId, onClose }: BudgetDetailDrawerPr
                               {task.title}
                             </span>
                             <div className="flex items-center gap-2 mt-1">
-                              {task.estimatedCost > 0 && task.status !== 'done' && (
+                              {(task.estimatedCost ?? 0) > 0 && task.status !== 'done' && (
                                 <span className="text-[10px] text-slate-400 font-medium bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100">
-                                  Est. {formatCurrency(task.estimatedCost)}
+                                  Est. {formatCurrency(task.estimatedCost ?? 0)}
                                 </span>
                               )}
                               {task.status === 'done' && task.actualCost !== undefined && (
                                 <span className={cn(
                                   "text-[10px] font-bold px-1.5 py-0.5 rounded-md border",
-                                  task.actualCost > task.estimatedCost 
+                                  (task.actualCost ?? 0) > (task.estimatedCost ?? 0) 
                                     ? "bg-rose-50 border-rose-100 text-rose-600"
-                                    : task.actualCost < task.estimatedCost
+                                    : (task.actualCost ?? 0) < (task.estimatedCost ?? 0)
                                       ? "bg-emerald-50 border-emerald-100 text-emerald-600"
                                       : "bg-slate-50 border-slate-100 text-slate-500"
                                 )}>
-                                  Spent {formatCurrency(task.actualCost)}
-                                  {task.actualCost > task.estimatedCost && " (Over)"}
-                                  {task.actualCost < task.estimatedCost && " (Saved)"}
+                                  Spent {formatCurrency(task.actualCost ?? 0)}
+                                  {(task.actualCost ?? 0) > (task.estimatedCost ?? 0) && " (Over)"}
+                                  {(task.actualCost ?? 0) < (task.estimatedCost ?? 0) && " (Saved)"}
                                 </span>
                               )}
                               <span className={cn(

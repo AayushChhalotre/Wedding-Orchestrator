@@ -1,5 +1,5 @@
 import { Layout } from "@/components/Layout";
-import { type Reminder } from "@/data/mockData";
+import { type Reminder } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { useState, useEffect } from "react";
 import { Mail, MessageCircle, Phone, RefreshCw, Clock } from "lucide-react";

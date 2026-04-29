@@ -150,7 +150,7 @@ export class BudgetEngine {
     const totalForecast = categories.reduce((acc, cat) => acc + cat.forecast, 0);
     const isOver = totalForecast > totalBudget;
     const phase = weddingInfo.budgetPhase || "dreaming";
-    const pace = weddingInfo.planningPace || "marathon";
+    const pace = weddingInfo.planningPace || "steady";
     
     const insights: any[] = [];
     
@@ -208,7 +208,7 @@ export class BudgetEngine {
         message: "You're almost there! Focus on double-checking all final payments and enjoying the magic you've created.",
         action: "Final Check"
       });
-    } else if (pace === "blitz") {
+    } else if (pace === "sprint") {
       insights.push({
         type: "warning",
         title: "The Home Stretch",

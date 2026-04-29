@@ -23,7 +23,7 @@ import { WeddingFloralRing } from "@/components/WeddingGraphics";
 import { BudgetRefinementModal } from "@/components/BudgetRefinementModal";
 import { BudgetDetailDrawer } from "@/components/BudgetDetailDrawer";
 import { BudgetCategory } from "@/lib/models/schema";
-import { Heart, Target, Lightbulb, PenLine, Shield, ShieldCheck, Zap, Lock, Unlock, Search, HeartHandshake, Compass, Coins, Save, History, RefreshCcw, Wallet, CheckCircle2, Minus } from "lucide-react";
+import { Heart, Target, Lightbulb, PenLine, Shield, ShieldCheck, Zap, Lock, Unlock, Search, HeartHandshake, Compass, Coins, Save, History, RefreshCcw, Wallet } from "lucide-react";
 
 export default function BudgetWatch() {
   const weddingInfo = useStore((state) => state.weddingInfo);
@@ -122,45 +122,98 @@ export default function BudgetWatch() {
     return result;
   }, [budgetCategories, filter, sortBy, weddingInfo.budgetPhase]);
 
+  // Variables for Spending Pace UI - Moved up for use in calculateVisionAlignment
+  const estimatedTotalDays = useMemo(() => {
+    if (weddingInfo.createdAt) {
+      const start = new Date(weddingInfo.createdAt);
+      const end = new Date(weddingInfo.weddingDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        return Math.max(1, diff);
+      }
+    }
+    return 270; // Fallback to 9 months if start date unknown
+  }, [weddingInfo.createdAt, weddingInfo.weddingDate]);
+
+  const timeElapsedPercent = Math.min(1, Math.max(0, (estimatedTotalDays - weddingInfo.daysLeft) / estimatedTotalDays));
+  const budgetSpentPercent = totalActual / (totalBudgetAmount || 1);
+  const isSpendingTooFast = budgetSpentPercent > timeElapsedPercent + 0.1;
+
   // Feasibility Score (0-100)
   // Vision Alignment Score (formerly Feasibility Score)
   const calculateVisionAlignment = () => {
     let score = 100;
+    const phase = weddingInfo.budgetPhase || 'dreaming';
+    const maturityPercent = memoizedMaturity.percentage;
+    const { lockedCount, totalCount } = memoizedMaturity;
     
-    // 1. Budget Overrun Impact (Max -40)
+    // 1. Budget Overrun Impact (Max -45)
     if (isOverBudget) {
       const overPercentage = ((totalForecast - totalBudgetAmount) / totalBudgetAmount) * 100;
-      score -= Math.min(40, overPercentage * 2); // More sensitive to overruns
+      
+      if (phase === 'dreaming') {
+        // More lenient in dreaming - curiosity shouldn't be punished too hard
+        score -= Math.min(25, overPercentage * 1); 
+      } else {
+        // Stricter in tracking - we need adherence to the map
+        // Scaled penalty: more mature plan = more punitive for overruns
+        const penaltyMultiplier = 2 + ((maturityPercent / 100) * 3); // 2x to 5x
+        score -= Math.min(45, overPercentage * penaltyMultiplier);
+      }
     }
     
-    // 2. Low Confidence Impact / Plan Maturity (Max -20)
-    const lowConfidence = budgetCategories.filter(c => c.confidence === 'low').length;
-    score -= Math.min(20, lowConfidence * 4);
+    // 2. Low Confidence Impact / Plan Maturity (Max -25)
+    const lowConfidenceCount = budgetCategories.filter(c => c.confidence === 'low').length;
+    
+    if (phase === 'dreaming') {
+      score -= Math.min(10, lowConfidenceCount * 1);
+    } else {
+      score -= Math.min(25, lowConfidenceCount * 5);
+    }
     
     // 3. Unallocated Budget Impact (Slightly positive if in Dreaming)
-    if (weddingInfo.budgetPhase === 'dreaming' && remainingInPot > totalBudgetAmount * 0.1) {
+    if (phase === 'dreaming' && remainingInPot > totalBudgetAmount * 0.1) {
       score += 5;
     }
 
     // 4. Spending Pace Impact (Max -20)
-    const estimatedTotalDays = 270; 
-    const timeElapsedPercent = Math.min(1, Math.max(0, (estimatedTotalDays - weddingInfo.daysLeft) / estimatedTotalDays));
-    const budgetSpentPercent = totalActual / (totalBudgetAmount || 1);
-
-    if (budgetSpentPercent > timeElapsedPercent + 0.1) {
+    const paceThreshold = timeElapsedPercent < 0.3 ? 0.2 : 0.1;
+    if (budgetSpentPercent > timeElapsedPercent + paceThreshold) {
        const paceDifference = (budgetSpentPercent - timeElapsedPercent) * 100;
-       score -= Math.min(20, paceDifference);
+       const pacePenalty = phase === 'dreaming' ? paceDifference * 0.5 : paceDifference;
+       score -= Math.min(20, pacePenalty);
+    }
+
+    // 5. Commitment Ratio (Tracking only)
+    if (phase === 'tracking' && totalCount > 0) {
+      const commitmentRatio = lockedCount / totalCount;
+      // If halfway through time but less than 30% categories settled
+      if (timeElapsedPercent > 0.5 && commitmentRatio < 0.3) {
+        score -= 15;
+      }
+      // Bonus for being highly organized
+      if (commitmentRatio > 0.9) {
+        score += 5;
+      }
+    }
+
+    // 6. Drift Penalty (Actuals vs Forecast for locked items)
+    const totalDrift = budgetCategories.reduce((acc, cat) => {
+      if (cat.confidence === 'high' && cat.actual > cat.forecast) {
+        return acc + (cat.actual - cat.forecast);
+      }
+      return acc;
+    }, 0);
+
+    if (totalDrift > 0) {
+      const driftPercent = (totalDrift / totalBudgetAmount) * 100;
+      const driftPenalty = phase === 'dreaming' ? driftPercent * 0.5 : driftPercent * 1.5;
+      score -= Math.min(15, driftPenalty);
     }
     
-    return Math.min(100, Math.max(0, score));
+    return Math.round(Math.min(100, Math.max(0, score)));
   };
   const visionAlignmentScore = calculateVisionAlignment();
-  
-  // Variables for Spending Pace UI
-  const estimatedTotalDays = 270; 
-  const timeElapsedPercent = Math.min(1, Math.max(0, (estimatedTotalDays - weddingInfo.daysLeft) / estimatedTotalDays));
-  const budgetSpentPercent = totalActual / (totalBudgetAmount || 1);
-  const isSpendingTooFast = budgetSpentPercent > timeElapsedPercent + 0.1;
 
   if (!mounted) return null;
 
@@ -193,29 +246,26 @@ export default function BudgetWatch() {
           <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
             <div className={cn(
               "absolute inset-0 opacity-5",
-              weddingInfo.planningPace === "marathon" ? "bg-emerald-500" :
-              weddingInfo.planningPace === "sprint" ? "bg-indigo-400" :
-              weddingInfo.planningPace === "blitz" ? "bg-primary" :
+              weddingInfo.planningPace === "serene" || weddingInfo.planningPace === "steady" ? "bg-emerald-500" :
+              weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? "bg-indigo-400" :
               "bg-rose-400"
             )} />
             <div className={cn(
               "p-2 rounded-xl relative z-10",
-              weddingInfo.planningPace === "marathon" ? "bg-emerald-50 text-emerald-600" :
-              weddingInfo.planningPace === "sprint" ? "bg-indigo-50 text-indigo-500" :
-              weddingInfo.planningPace === "blitz" ? "bg-primary/5 text-primary" :
+              weddingInfo.planningPace === "serene" || weddingInfo.planningPace === "steady" ? "bg-emerald-50 text-emerald-600" :
+              weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? "bg-indigo-50 text-indigo-500" :
               "bg-rose-50 text-rose-500"
             )}>
-              {weddingInfo.planningPace === "marathon" ? <Compass className="w-4 h-4" /> :
-               weddingInfo.planningPace === "sprint" ? <Activity className="w-4 h-4" /> :
-               weddingInfo.planningPace === "blitz" ? <Zap className="w-4 h-4" /> :
+              {weddingInfo.planningPace === "serene" || weddingInfo.planningPace === "steady" ? <Compass className="w-4 h-4" /> :
+               weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? <Activity className="w-4 h-4" /> :
                <Heart className="w-4 h-4 animate-pulse" />}
             </div>
             <div className="relative z-10">
               <p className="text-[9px] uppercase font-bold tracking-widest text-slate-400 leading-none mb-1">Our Tempo</p>
               <p className="text-xs font-bold text-slate-700 capitalize">
-                {weddingInfo.planningPace === "marathon" ? "Steady Flow" : 
-                 weddingInfo.planningPace === "sprint" ? "Swift Progress" : 
-                 weddingInfo.planningPace === "blitz" ? "Focus Sprint" : "Final Countdown"}: {weddingInfo.daysLeft} Days
+                {weddingInfo.planningPace === "serene" || weddingInfo.planningPace === "steady" ? "Steady Flow" : 
+                 weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? "Swift Progress" : 
+                 "Final Countdown"}: {weddingInfo.daysLeft} Days
               </p>
             </div>
           </div>
@@ -429,6 +479,19 @@ export default function BudgetWatch() {
                   <span className="text-[10px] uppercase font-bold text-muted-foreground">
                     {weddingInfo.budgetPhase === 'dreaming' ? 'Aligned' : 'Healthy'}
                   </span>
+                  <div className="mt-1 flex flex-col items-center">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] font-bold text-slate-400">
+                        {memoizedMaturity.lockedCount}/{memoizedMaturity.totalCount}
+                      </span>
+                      {memoizedMaturity.lockedCount === memoizedMaturity.totalCount ? (
+                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                      ) : (
+                        <Lock className="w-2.5 h-2.5 text-slate-300" />
+                      )}
+                    </div>
+                    <span className="text-[8px] text-slate-400 uppercase tracking-tighter">Settled</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -495,6 +558,10 @@ export default function BudgetWatch() {
                             setSelectedCategory(firstLuxury);
                             setIsModalOpen(true);
                           }
+                        } else if (insight.action === "Track Progress") {
+                          useStore.getState().setBudgetPhase('tracking');
+                          setShowCelebration(true);
+                          setTimeout(() => setShowCelebration(false), 3000);
                         } else {
                           setIsModalOpen(true);
                         }
@@ -1061,8 +1128,7 @@ export default function BudgetWatch() {
       />
 
       <BudgetDetailDrawer 
-        categoryId={activeCategoryId || ""}
-        isOpen={isDetailDrawerOpen}
+        categoryId={activeCategoryId}
         onClose={() => {
           setIsDetailDrawerOpen(false);
           setActiveCategoryId(null);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { TaskDrawer } from "@/components/TaskDrawer";
-import { type Stakeholder } from "@/data/mockData";
+import { type Stakeholder } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 import { X, Bell, ChevronRight } from "lucide-react";

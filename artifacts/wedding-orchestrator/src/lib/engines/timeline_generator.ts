@@ -1,4 +1,4 @@
-import { Task, Phase } from "@/data/mockData";
+import { Task, Phase } from "@/lib/models/schema";
 import { v4 as uuidv4 } from "uuid";
 
 export interface TimelineGenerationInput {
@@ -104,7 +104,7 @@ export class TimelineGenerator {
 
     // 4. Fill 'blocks' field based on dependencies
     tasks.forEach(task => {
-      task.dependencies.forEach(depId => {
+      task.dependencies.forEach((depId: string) => {
         const depTask = tasks.find(t => t.id === depId);
         if (depTask) {
           depTask.blocks.push(task.id);

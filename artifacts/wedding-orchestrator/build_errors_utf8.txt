@@ -1,0 +1,25 @@
+﻿
+> @workspace/wedding-orchestrator@0.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+src/components/BudgetDetailDrawer.tsx(89,28): error TS2304: Cannot find name 'newEstimate'.
+src/components/BudgetDetailDrawer.tsx(92,7): error TS2304: Cannot find name 'setIsEditing'.
+src/components/BudgetDetailDrawer.tsx(93,7): error TS2304: Cannot find name 'setNewEstimate'.
+src/components/BudgetDetailDrawer.tsx(361,32): error TS18048: 'task.estimatedCost' is possibly 'undefined'.
+src/components/BudgetDetailDrawer.tsx(363,56): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/BudgetDetailDrawer.tsx(369,53): error TS18048: 'task.estimatedCost' is possibly 'undefined'.
+src/components/BudgetDetailDrawer.tsx(371,57): error TS18048: 'task.estimatedCost' is possibly 'undefined'.
+src/components/BudgetDetailDrawer.tsx(376,54): error TS18048: 'task.estimatedCost' is possibly 'undefined'.
+src/components/BudgetDetailDrawer.tsx(377,54): error TS18048: 'task.estimatedCost' is possibly 'undefined'.
+src/components/Layout.tsx(70,11): error TS2322: Type '{ hidden: { x: number; opacity: number; }; visible: { x: number; opacity: number; transition: { type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ x: number; opacity: number; transition: { type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }; }' is not assignable to type 'Variant'.
+      Type '{ x: number; opacity: number; transition: { type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ x: number; opacity: number; transition: { type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ type: string; stiffness: number; damping: number; staggerChildren: number; delayChildren: number; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'type' are incompatible.
+                    Type 'string' is not assignable to type 'AnimationGeneratorType | undefined'.

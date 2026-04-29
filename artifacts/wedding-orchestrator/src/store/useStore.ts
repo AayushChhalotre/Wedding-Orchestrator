@@ -17,7 +17,8 @@ import {
   BudgetWatchout,
   BudgetScenario,
   PlanningPace,
-  BudgetPhase
+  BudgetPhase,
+  RiskAssistance
 } from "@/lib/models/schema";
 import { 
   weddingInfo as initialWeddingInfo,
@@ -114,7 +115,7 @@ export interface AppState {
   lastCompletedTaskId: string | null;
   
   // Actions
-  updateWeddingInfo: (info: Partial<WeddingInfo>) => void;
+  updateWeddingInfo: (info: Partial<AppWeddingInfo>) => void;
   completeTask: (taskId: string) => void;
   snoozeTask: (taskId: string, days: number) => void;
   reassignTask: (taskId: string, newOwner: string, newOwnerType: "couple" | "family" | "vendor") => void;
@@ -186,7 +187,10 @@ export interface AppState {
     lockedAmount: number;
     estimatedAmount: number;
     status: "vibe_check" | "planning" | "solidified";
+    lockedCount: number;
+    totalCount: number;
   };
+  setBudgetPhase: (phase: BudgetPhase) => void;
   getBudgetActionables: () => {
     id: string;
     category: string;
@@ -842,7 +846,7 @@ export const useStore = create<AppState>()(
               customEstimate: estimate, 
               forecast: cat.actual + estimate,
               priority: priority || cat.priority || "must_have",
-              trend: (cat.actual + estimate) > cat.planned ? "up" : (cat.actual + estimate) < cat.planned ? "down" : "stable"
+              trend: (cat.actual + estimate) > cat.planned ? "up" as const : (cat.actual + estimate) < cat.planned ? "down" as const : "stable" as const
             } 
           : cat
       )
@@ -955,7 +959,7 @@ export const useStore = create<AppState>()(
         return {
           ...cat,
           forecast: newForecast,
-          trend: newForecast > cat.planned ? "up" : newForecast < cat.planned ? "down" : "stable"
+          trend: newForecast > cat.planned ? "up" as const : newForecast < cat.planned ? "down" as const : "stable" as const
         };
       });
       
@@ -1108,23 +1112,60 @@ export const useStore = create<AppState>()(
   },
 
   recalculateNextSteps: () => {
-    const { tasks, weddingInfo } = get();
+    const { tasks } = get();
     const engine = new DependencyEngine(tasks);
     
     set((state) => {
-      const doneTaskIds = state.tasks.filter(t => t.status === "done").map(t => t.id);
-      
-      // 1. Filter out finished tasks from next steps
-      let newNextSteps = state.nextSteps.filter(ns => !doneTaskIds.includes(ns.taskId));
-      
-      // 2. Identify new potential next steps: Tasks that are NOT blocked and NOT done
-      const readyTasks = state.tasks.filter(t => t.status !== "done" && !engine.isBlocked(t.id));
-      
-      // Update next steps to prioritize these ready tasks
-      // For MVP, we'll just keep the existing logic but ensure they aren't blocked
-      newNextSteps = newNextSteps.filter(ns => !engine.isBlocked(ns.taskId));
+      // 1. Identify all tasks that are NOT done and NOT blocked
+      const availableTasks = state.tasks.filter(t => 
+        t.status !== "done" && !engine.isBlocked(t.id)
+      );
 
-      // 3. Update Risks based on engine
+      // 2. Sort available tasks by urgency/priority
+      // Strategy: Priority (High > Med > Low) -> Criticality (Block Count) -> Due Date
+      const priorityMap = { high: 3, medium: 2, low: 1 };
+      const criticalTasks = engine.getCriticalTasks();
+      
+      const getCriticalityWeight = (taskId: string) => {
+        const index = criticalTasks.findIndex(t => t.id === taskId);
+        return index === -1 ? 0 : (criticalTasks.length - index);
+      };
+
+      const sortedTasks = [...availableTasks].sort((a, b) => {
+        // Priority first
+        const pA = priorityMap[a.priority as keyof typeof priorityMap] || 0;
+        const pB = priorityMap[b.priority as keyof typeof priorityMap] || 0;
+        if (pB !== pA) return pB - pA;
+
+        // Then criticality (how many things it blocks)
+        const cA = getCriticalityWeight(a.id);
+        const cB = getCriticalityWeight(b.id);
+        if (cB !== cA) return cB - cA;
+
+        // Then due date (soonest first)
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
+
+      // 3. Take top 3 and convert to NextStep format
+      const top3 = sortedTasks.slice(0, 3);
+      const newNextSteps = top3.map(task => {
+        const dueDateObj = parseISO(task.dueDate);
+        const daysLeft = differenceInDays(dueDateObj, new Date());
+        
+        return {
+          id: `ns-${task.id}`,
+          taskId: task.id,
+          title: task.title,
+          dueDate: task.dueDate,
+          daysLeft,
+          isOverdue: daysLeft < 0,
+          reason: task.whyItMatters || "High priority task for your wedding trajectory.",
+          blocks: task.blocks || []
+        };
+      });
+
+      // 4. Update Risks based on engine
+      const doneTaskIds = state.tasks.filter(t => t.status === "done").map(t => t.id);
       const newRisks = state.risks.filter(r => {
         if (r.id === "risk1" && doneTaskIds.includes("t2")) return false;
         if (r.id === "risk2" && doneTaskIds.includes("t1")) return false;
@@ -1157,7 +1198,7 @@ export const useStore = create<AppState>()(
           if (existingIndex !== -1) {
             updatedTasks[existingIndex] = {
               ...updatedTasks[existingIndex],
-              status: et.status,
+              status: et.status as TaskStatus,
               owner: et.owner
             };
           }
@@ -1283,6 +1324,9 @@ export const useStore = create<AppState>()(
       effort: 2,
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 1 week from now
       phase: "Custom",
+      title: "New Task",
+      phaseId: "custom",
+      category: "General",
       ...taskData,
     };
 
@@ -1399,6 +1443,7 @@ export const useStore = create<AppState>()(
     const isOver = totalForecast > totalBudget;
     const phase = weddingInfo.budgetPhase || "dreaming";
     const pace = weddingInfo.planningPace || "serene";
+    const maturity = get().getPlanningMaturity();
     
     const insights: any[] = [];
     
@@ -1446,6 +1491,16 @@ export const useStore = create<AppState>()(
           action: "View Breakdown"
         });
       }
+    }
+
+    // Phase-specific locking advice
+    if (phase === "dreaming" && maturity.percentage > 60) {
+      insights.push({
+        type: "info",
+        title: "Ready for the Next Chapter?",
+        message: "Your vision is starting to feel very solid. This might be a wonderful time to switch to 'Tracking' mode to begin bringing these dreams to life.",
+        action: "Track Progress"
+      });
     }
 
     // Pace-specific advice
@@ -1506,12 +1561,22 @@ export const useStore = create<AppState>()(
 
   getPlanningMaturity: () => {
     const { budgetCategories } = get();
+    const totalCount = budgetCategories.length;
     const totalForecast = budgetCategories.reduce((acc, cat) => acc + cat.forecast, 0);
-    if (totalForecast === 0) return { percentage: 0, lockedAmount: 0, estimatedAmount: 0, status: "vibe_check" };
+    
+    if (totalForecast === 0) {
+      return { 
+        percentage: 0, 
+        lockedAmount: 0, 
+        estimatedAmount: 0, 
+        status: "vibe_check", 
+        lockedCount: 0,
+        totalCount: totalCount
+      };
+    }
 
-    const lockedAmount = budgetCategories
-      .filter(cat => cat.confidence === 'high')
-      .reduce((acc, cat) => acc + (cat.actual || cat.forecast), 0);
+    const highConfidenceItems = budgetCategories.filter(cat => cat.confidence === 'high');
+    const lockedAmount = highConfidenceItems.reduce((acc, cat) => acc + (cat.actual || cat.forecast), 0);
     
     const estimatedAmount = totalForecast - lockedAmount;
     const percentage = Math.round((lockedAmount / totalForecast) * 100);
@@ -1520,7 +1585,23 @@ export const useStore = create<AppState>()(
     if (percentage > 80) status = "solidified";
     else if (percentage > 40) status = "planning";
     
-    return { percentage, lockedAmount, estimatedAmount, status };
+    return { 
+      percentage, 
+      lockedAmount, 
+      estimatedAmount, 
+      status,
+      lockedCount: highConfidenceItems.length,
+      totalCount
+    };
+  },
+
+  setBudgetPhase: (phase: BudgetPhase) => {
+    set(state => ({
+      weddingInfo: {
+        ...state.weddingInfo,
+        budgetPhase: phase
+      }
+    }));
   },
 
   getBudgetActionables: () => {

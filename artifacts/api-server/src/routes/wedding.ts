@@ -18,9 +18,9 @@ router.get("/", async (req, res) => {
       return res.status(404).json({ message: "Wedding not found" });
     }
     
-    res.json(wedding);
+    return res.json(wedding);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -32,9 +32,9 @@ router.patch("/", async (req, res) => {
       .where(eq(weddingsTable.id, DEFAULT_WEDDING_ID))
       .returning();
       
-    res.json(updated[0]);
+    return res.json(updated[0]);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 

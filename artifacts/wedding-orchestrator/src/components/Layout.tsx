@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -39,7 +39,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const weddingInfo = useStore(state => state.weddingInfo);
 
-  const sidebarVariants = {
+  const sidebarVariants: Variants = {
     hidden: { x: -20, opacity: 0 },
     visible: { 
       x: 0, 

@@ -1,3 +1,6 @@
+import { type Rashi } from "@/lib/models/schema";
+export type { Rashi };
+
 export interface Muhurat {
   date: string; // ISO format
   quality: "Excellent" | "Good" | "Average";
@@ -77,10 +80,8 @@ export function getRelevantDates(tradition: string): Muhurat[] {
   return ALL_MUHURATS.filter(m => m.tradition === normTradition || m.tradition === "Secular");
 }
 
-export type Rashi = 
-  | "Aries" | "Taurus" | "Gemini" | "Cancer" 
-  | "Leo" | "Virgo" | "Libra" | "Scorpio" 
-  | "Sagittarius" | "Capricorn" | "Aquarius" | "Pisces";
+
+
 
 const compatibilityMap: Record<Rashi, Rashi[]> = {
   Aries: ["Leo", "Sagittarius", "Gemini", "Libra"],

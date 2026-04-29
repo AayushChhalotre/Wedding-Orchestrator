@@ -6,7 +6,7 @@ export interface WhatsAppAnalysisResult {
   tasks: Array<{
     title: string;
     owner: string;
-    status: 'todo' | 'in-progress' | 'done';
+    status: 'not_started' | 'in_progress' | 'done';
   }>;
   statusTracking: {
     venueBooked: boolean;
@@ -178,7 +178,7 @@ export class WhatsAppAnalyzer {
 
     // 2. Frequency Analysis of Capitalized Words
     const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g;
-    const rawMatches = text.match(namePattern) || [];
+    const rawMatches = (text.match(namePattern) || []) as string[];
     const frequency: Record<string, number> = {};
     
     rawMatches.forEach(match => {
@@ -212,9 +212,9 @@ export class WhatsAppAnalyzer {
     return { partner1: p1, partner2: p2, potentialGuests };
   }
 
-  private static extractExplicitTasks(rawText: string): Array<{ title: string, owner: string, status: 'todo' | 'in-progress' | 'done' }> {
+  private static extractExplicitTasks(rawText: string): Array<{ title: string, owner: string, status: 'not_started' | 'in_progress' | 'done' }> {
     const taskPattern = /Task\s*:\s*([^|\n]+)(?:\s*\|\s*Owner\s*:\s*([^|\n]+))?(?:\s*\|\s*Status\s*:\s*([^|\n\r]+))?/gi;
-    const tasks: Array<{ title: string, owner: string, status: 'todo' | 'in-progress' | 'done' }> = [];
+    const tasks: Array<{ title: string, owner: string, status: 'not_started' | 'in_progress' | 'done' }> = [];
     let match;
     while ((match = taskPattern.exec(rawText)) !== null) {
       tasks.push({
@@ -226,10 +226,10 @@ export class WhatsAppAnalyzer {
     return tasks;
   }
 
-  private static normalizeStatus(status: string): 'todo' | 'in-progress' | 'done' {
+  private static normalizeStatus(status: string): 'not_started' | 'in_progress' | 'done' {
     if (status.includes('done') || status.includes('confirmed') || status.includes('booked')) return 'done';
-    if (status.includes('progress') || status.includes('negotiation') || status.includes('shortlist')) return 'in-progress';
-    return 'todo';
+    if (status.includes('progress') || status.includes('negotiation') || status.includes('shortlist')) return 'in_progress';
+    return 'not_started';
   }
 
   private static extractStatusTracking(text: string, detectedCity: string) {
@@ -240,7 +240,7 @@ export class WhatsAppAnalyzer {
       plannerHired: false,
       photoBooked: false,
       multiDay: lowerText.includes("multi-day") || lowerText.includes("3 day") || lowerText.includes("4 day") || lowerText.includes("haldi") || lowerText.includes("sangeet"),
-      destination: lowerText.includes("destination") || lowerText.includes("traveling to") || (detectedCity && !["Mumbai", "Delhi", "Bangalore", "Chennai"].includes(detectedCity))
+      destination: !!(lowerText.includes("destination") || lowerText.includes("traveling to") || (detectedCity && !["Mumbai", "Delhi", "Bangalore", "Chennai"].includes(detectedCity)))
     };
 
     const doneKeywords = ["booked", "final", "fixed", "hired", "deposit paid", "confirmed", "locked", "advance paid", "done"];

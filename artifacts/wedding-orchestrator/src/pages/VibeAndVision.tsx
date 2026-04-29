@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useStore, EventInfo } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, MapPin, Users, Clock, Trash2, Camera, Palette, Zap, Music, Shirt, Wind, Copy } from "lucide-react";
+import { Plus, MapPin, Users, Clock, Trash2, Camera, Palette, Zap, Music, Shirt, Wind, Copy, Compass, Heart, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { comboPacks, ComboPack } from "@/lib/combo-packs";
 import { VisionNarrativeEditor } from "@/components/VisionNarrativeEditor";

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { RiskPanel, RiskModal } from "@/components/RiskPanel";
-import { type Risk } from "@/data/mockData";
+import { type Risk } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { motion } from "framer-motion";
 

@@ -1,5 +1,5 @@
 import { X, CheckCircle2, Clock, AlertTriangle, UserCircle2, ExternalLink, Check, Calendar as CalendarIcon, UserPlus, FileUp, ShieldCheck, IndianRupee, Tags } from "lucide-react";
-import { type Task } from "@/data/mockData";
+import { type Task } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useState } from "react";
@@ -17,6 +17,7 @@ const statusConfig = {
   done: { label: "Done", color: "bg-green-50 text-green-700 border-green-100" },
   at_risk: { label: "At risk", color: "bg-amber-50 text-amber-700 border-amber-100" },
   overdue: { label: "Overdue", color: "bg-red-50 text-red-600 border-red-100" },
+  blocked: { label: "Blocked", color: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
 export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {

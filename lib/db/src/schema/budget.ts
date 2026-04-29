@@ -1,7 +1,11 @@
-import { pgTable, text, timestamp, integer, boolean, jsonb, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, jsonb, decimal, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { weddingsTable } from "./weddings";
+export const budgetConfidenceEnum = pgEnum("budget_confidence", ["high", "medium", "low"]);
+export const budgetTrendEnum = pgEnum("budget_trend", ["up", "down", "stable"]);
+export const budgetPriorityEnum = pgEnum("budget_priority", ["must_have", "nice_to_have", "luxury"]);
+export const budgetUpdateTypeEnum = pgEnum("budget_update_type", ["increase", "decrease", "reallocation"]);
 
 export const budgetScenariosTable = pgTable("budget_scenarios", {
   id: text("id").primaryKey(),
@@ -13,6 +17,10 @@ export const budgetScenariosTable = pgTable("budget_scenarios", {
   isLocked: boolean("is_locked").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    weddingIdIndex: index("budget_scenarios_wedding_id_idx").on(table.weddingId),
+  };
 });
 
 export const budgetCategoriesTable = pgTable("budget_categories", {
@@ -22,15 +30,19 @@ export const budgetCategoriesTable = pgTable("budget_categories", {
   planned: integer("planned").notNull(),
   forecast: integer("forecast").notNull(),
   actual: integer("actual").notNull(),
-  confidence: text("confidence").notNull(), // "high" | "medium" | "low"
+  confidence: budgetConfidenceEnum("confidence").notNull(),
   notes: text("notes"),
-  trend: text("trend"), // "up" | "down" | "stable"
+  trend: budgetTrendEnum("trend"),
   driftAmount: integer("drift_amount"),
-  priority: text("priority"), // "must_have" | "nice_to_have" | "luxury"
+  priority: budgetPriorityEnum("priority"),
   customEstimate: integer("custom_estimate"),
   suggestedRange: jsonb("suggested_range").$type<{ min: number; max: number }>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    weddingIdIndex: index("budget_categories_wedding_id_idx").on(table.weddingId),
+  };
 });
 
 export const budgetUpdatesTable = pgTable("budget_updates", {
@@ -40,8 +52,13 @@ export const budgetUpdatesTable = pgTable("budget_updates", {
   amount: integer("amount").notNull(),
   date: text("date").notNull(),
   description: text("description").notNull(),
-  type: text("type").notNull(), // "increase" | "decrease" | "reallocation"
+  type: budgetUpdateTypeEnum("type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    weddingIdIndex: index("budget_updates_wedding_id_idx").on(table.weddingId),
+    dateIndex: index("budget_updates_date_idx").on(table.date),
+  };
 });
 
 export const insertBudgetScenarioSchema = createInsertSchema(budgetScenariosTable);
@@ -51,3 +68,7 @@ export const insertBudgetUpdateSchema = createInsertSchema(budgetUpdatesTable);
 export type BudgetScenario = typeof budgetScenariosTable.$inferSelect;
 export type BudgetCategory = typeof budgetCategoriesTable.$inferSelect;
 export type BudgetUpdate = typeof budgetUpdatesTable.$inferSelect;
+
+export type InsertBudgetScenario = typeof budgetScenariosTable.$inferInsert;
+export type InsertBudgetCategory = typeof budgetCategoriesTable.$inferInsert;
+export type InsertBudgetUpdate = typeof budgetUpdatesTable.$inferInsert;

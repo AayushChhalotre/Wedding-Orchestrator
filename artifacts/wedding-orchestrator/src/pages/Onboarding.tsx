@@ -420,7 +420,7 @@ export default function Onboarding() {
         {mounted && (
           <div className="relative w-full aspect-[4/5] max-h-[520px] flex items-center justify-center p-0">
             <WeddingGraphic 
-              type={step === 1 && (whatsAppStatus === 'processing' || whatsAppStatus === 'analyzing') ? "whatsapp" : "onboarding"} 
+              type={step === 1 && (whatsAppStatus === 'analyzing') ? "whatsapp" : "onboarding"} 
               className="absolute inset-0 rounded-[40px] shadow-2xl"
               partner1={partner1}
               partner2={partner2}

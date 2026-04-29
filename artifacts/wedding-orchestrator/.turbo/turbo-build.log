@@ -1,0 +1,27 @@
+
+> @workspace/wedding-orchestrator@0.0.0 build C:\Users\aayus\Workspace\Projects\Wedding-Orchestrator\Wedding-Orchestrator\artifacts\wedding-orchestrator
+> vite build --config vite.config.ts
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[33msrc/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.[39m
+[33m[plugin vite:esbuild] src/store/useStore.ts: [33mDuplicate key "setBudgetPhase" in object literal[33m
+1559 |    },
+1560 |  
+1561 |    setBudgetPhase: (phase: BudgetPhase) => {
+     |    ^
+1562 |      set(state => ({
+1563 |        weddingInfo: {
+[39m
+[32m✓[39m 2524 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/public/[22m[32mindex.html                 [39m[1m[2m  0.75 kB[22m[1m[22m[2m │ gzip:   0.42 kB[22m
+[2mdist/public/[22m[35massets/index-YL0VVdAr.css  [39m[1m[2m192.98 kB[22m[1m[22m[2m │ gzip:  27.58 kB[22m
+[2mdist/public/[22m[36massets/index-C-5qFu2K.js   [39m[1m[33m799.12 kB[39m[22m[2m │ gzip: 233.34 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 10.32s[39m

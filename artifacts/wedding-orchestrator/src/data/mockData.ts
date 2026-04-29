@@ -11,9 +11,10 @@ export const weddingInfo: WeddingInfo = {
   daysLeft: 244,
   budget: "₹30L",
   guests: "300",
-  planningPace: "marathon",
+  planningPace: "steady",
   budgetPhase: "dreaming",
   activeScenarioId: "scen-1",
+  createdAt: "2026-04-01T00:00:00Z",
 };
 
 export const budgetCategories: BudgetCategory[] = [

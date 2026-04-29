@@ -4,9 +4,13 @@ export interface WeddingEvent {
   date: string;
 }
 
-export type TaskStatus = "not_started" | "in_progress" | "done" | "at_risk" | "overdue";
+export type TaskStatus = "not_started" | "in_progress" | "done" | "at_risk" | "overdue" | "blocked";
 export type PlanningPace = "serene" | "steady" | "brisk" | "sprint" | "final_countdown";
 export type BudgetPhase = "dreaming" | "tracking";
+export type Rashi = 
+  | "Aries" | "Taurus" | "Gemini" | "Cancer" 
+  | "Leo" | "Virgo" | "Libra" | "Scorpio" 
+  | "Sagittarius" | "Capricorn" | "Aquarius" | "Pisces";
 
 export interface Task {
   id: string;
@@ -154,4 +158,9 @@ export interface WeddingInfo {
   planningPace: PlanningPace;
   budgetPhase: BudgetPhase;
   activeScenarioId?: string;
+  createdAt: string;
+  weddingType?: string;
+  partner1Rashi?: Rashi;
+  partner2Rashi?: Rashi;
+  lockedDates?: Record<string, string>;
 }
