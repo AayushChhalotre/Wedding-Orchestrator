@@ -127,6 +127,33 @@ export const phases: Phase[] = [
 
 export const tasks: Task[] = [
   {
+    id: "t0",
+    title: "Set overall wedding budget",
+    dueDate: "2025-04-15",
+    status: "not_started",
+    phase: "Foundation",
+    phaseId: "foundation",
+    owner: "Partner 1 & Partner 2",
+    ownerInitials: "CP",
+    ownerType: "couple",
+    category: "Finance",
+    dependencies: [],
+    blocks: ["t1", "t3"],
+    whyItMatters: "Budget defines the scope for all vendor selections and wedding scale.",
+    notes: "Need to align on total contribution and priority areas.",
+    priority: "high",
+    effort: 2,
+    customActionType: "overall_budget",
+    customActionData: {
+      amount: 3000000
+    },
+    requirements: [
+      { text: "Parent/Self contribution alignment", completed: false },
+      { text: "Priority identification", completed: false },
+      { text: "Buffer/Contingency planning", completed: false }
+    ]
+  },
+  {
     id: "t1",
     title: "Finalize venue shortlist and book site visits",
     dueDate: "2025-04-22",
@@ -148,7 +175,13 @@ export const tasks: Task[] = [
     actualCost: 800000,
     isMilestone: true,
     budgetCategoryId: "bc1",
-    customActionType: "venue_shortlist"
+    customActionType: "venue_shortlist",
+    requirements: [
+      { text: "Minimum capacity check", completed: false },
+      { text: "Location accessibility", completed: false },
+      { text: "Date availability", completed: false },
+      { text: "Budget fit", completed: false }
+    ]
   },
   {
     id: "t2",
@@ -168,7 +201,18 @@ export const tasks: Task[] = [
     vendorPortalLink: undefined,
     priority: "high",
     effort: 3,
-    customActionType: "guest_count"
+    customActionType: "guest_count",
+    customActionData: {
+      partner1Guests: 110,
+      partner2Guests: 130,
+      mutualGuests: 60
+    },
+    requirements: [
+      { text: "Groom's family list", completed: false },
+      { text: "Bride's family list", completed: false },
+      { text: "Mutual friends list", completed: false },
+      { text: "VIP list", completed: false }
+    ]
   },
   {
     id: "t3",
@@ -189,7 +233,17 @@ export const tasks: Task[] = [
     effort: 2,
     estimatedCost: 900000,
     budgetCategoryId: "bc2",
-    isMilestone: true
+    isMilestone: true,
+    customActionData: {
+      perPlate: 1500,
+      cuisine: "Fusion"
+    },
+    requirements: [
+      { text: "Tasting session", completed: false },
+      { text: "Dietary restriction survey", completed: false },
+      { text: "Per-plate negotiation", completed: false },
+      { text: "Menu selection", completed: false }
+    ]
   },
   {
     id: "t4",
@@ -208,7 +262,13 @@ export const tasks: Task[] = [
     notes: "Need to transfer ₹5L via NEFT",
     priority: "high",
     effort: 1,
-    estimatedCost: 500000
+    estimatedCost: 500000,
+    budgetCategoryId: "bc1",
+    requirements: [
+      { text: "Bank details verification", completed: false },
+      { text: "Fund transfer", completed: false },
+      { text: "Receipt collection", completed: false }
+    ]
   },
   {
     id: "t5",
@@ -231,6 +291,12 @@ export const tasks: Task[] = [
     budgetCategoryId: "bc4",
     priority: "high",
     effort: 4,
+    requirements: [
+      { text: "Portfolio review", completed: false },
+      { text: "Packages comparison", completed: false },
+      { text: "Contract review", completed: false },
+      { text: "Date confirmation", completed: false }
+    ]
   },
   {
     id: "t6",
@@ -251,7 +317,13 @@ export const tasks: Task[] = [
     effort: 3,
     estimatedCost: 85000,
     budgetCategoryId: "bc6",
-    customActionType: "invitation_designs"
+    customActionType: "invitation_designs",
+    requirements: [
+      { text: "Content finalization", completed: false },
+      { text: "Vendor selection", completed: false },
+      { text: "Paper quality check", completed: false },
+      { text: "Sample proof approval", completed: false }
+    ]
   },
   {
     id: "t7",
@@ -270,6 +342,11 @@ export const tasks: Task[] = [
     notes: "",
     priority: "low",
     effort: 2,
+    requirements: [
+      { text: "Address collection", completed: false },
+      { text: "Courier coordination", completed: false },
+      { text: "Hand-delivery planning", completed: false }
+    ]
   },
   {
     id: "t8",
@@ -290,6 +367,17 @@ export const tasks: Task[] = [
     budgetCategoryId: "bc3",
     priority: "high",
     effort: 3,
+    customActionType: "decor_concept",
+    customActionData: {
+      theme: "Royal Rajputana",
+      mood: "Regal, Gold, Red"
+    },
+    requirements: [
+      { text: "Theme selection", completed: false },
+      { text: "Mood board approval", completed: false },
+      { text: "Floral vs Props balance", completed: false },
+      { text: "Lighting plan", completed: false }
+    ]
   },
   {
     id: "t9",
@@ -308,6 +396,11 @@ export const tasks: Task[] = [
     notes: "",
     priority: "high",
     effort: 1,
+    requirements: [
+      { text: "RSVP deadline check", completed: false },
+      { text: "Final list cleanup", completed: false },
+      { text: "Vendor notification", completed: false }
+    ]
   },
   {
     id: "t10",
@@ -326,6 +419,11 @@ export const tasks: Task[] = [
     notes: "",
     priority: "medium",
     effort: 2,
+    requirements: [
+      { text: "Portfolio check", completed: false },
+      { text: "Design style selection", completed: false },
+      { text: "Artist availability", completed: false }
+    ]
   },
   {
     id: "t11",
@@ -344,6 +442,19 @@ export const tasks: Task[] = [
     notes: "",
     priority: "medium",
     effort: 5,
+    customActionType: "sangeet_setlist",
+    customActionData: {
+      songs: [
+        { id: 1, title: "Kala Chashma", performers: "Bride's Friends" },
+        { id: 2, title: "Maahi Ve", performers: "Groom's Family" }
+      ]
+    },
+    requirements: [
+      { text: "Song selection", completed: false },
+      { text: "Performer assignment", completed: false },
+      { text: "Choreographer hire", completed: false },
+      { text: "Rehearsal schedule", completed: false }
+    ]
   },
   {
     id: "t12",
@@ -362,7 +473,20 @@ export const tasks: Task[] = [
     notes: "",
     priority: "low",
     effort: 4,
-  },
+    customActionType: "logistics_pickups",
+    customActionData: {
+      pickups: [
+        { id: 1, time: "10:00 AM", guests: 4, name: "Chacha Ji" },
+        { id: 2, time: "02:30 PM", guests: 2, name: "Aunt Sarah" }
+      ],
+      totalArrivals: 6
+    },
+    requirements: [
+      { text: "Flight details collection", completed: false },
+      { text: "Driver assignment", completed: false },
+      { text: "Vehicle coordination", completed: false }
+    ]
+  }
 ];
 
 export const nextSteps = [

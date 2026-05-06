@@ -235,14 +235,14 @@ export function BudgetDetailDrawer({ categoryId, onClose }: BudgetDetailDrawerPr
 
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: 'standard', label: 'Modest', color: 'bg-slate-50 text-slate-600 border-slate-100' },
-                      { id: 'premium', label: 'Balanced', color: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
-                      { id: 'luxury', label: 'Elevated', color: 'bg-purple-50 text-purple-700 border-purple-100' }
+                      { id: 'must_have', label: 'Essential Heart', color: 'bg-slate-50 text-slate-600 border-slate-100' },
+                      { id: 'nice_to_have', label: 'Lovely Additions', color: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
+                      { id: 'luxury', label: 'Pure Magic', color: 'bg-purple-50 text-purple-700 border-purple-100' }
                     ].map((tier) => (
                       <button
                         key={tier.id}
                         disabled={category.isLocked}
-                        onClick={() => updateBudgetEstimate(category.id, (suggestedRange as any)[tier.id], tier.id as any)}
+                        onClick={() => updateBudgetEstimate(category.id, (suggestedRange as any)[tier.id === 'must_have' ? 'standard' : tier.id === 'nice_to_have' ? 'premium' : 'luxury'], tier.id as any)}
                         className={cn(
                           "flex flex-col items-center p-3 rounded-2xl border transition-all relative overflow-hidden group",
                           tier.color,
@@ -251,7 +251,7 @@ export function BudgetDetailDrawer({ categoryId, onClose }: BudgetDetailDrawerPr
                         )}
                       >
                         <span className="text-[10px] font-bold uppercase tracking-tight mb-1 opacity-70">{tier.label}</span>
-                        <span className="text-xs font-bold">{formatCurrency((suggestedRange as any)[tier.id])}</span>
+                        <span className="text-xs font-bold">{formatCurrency((suggestedRange as any)[tier.id === 'must_have' ? 'standard' : tier.id === 'nice_to_have' ? 'premium' : 'luxury'])}</span>
                       </button>
                     ))}
                   </div>

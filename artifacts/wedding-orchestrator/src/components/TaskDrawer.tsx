@@ -1,4 +1,4 @@
-import { X, CheckCircle2, Clock, AlertTriangle, UserCircle2, ExternalLink, Check, Calendar as CalendarIcon, UserPlus, FileUp, ShieldCheck, IndianRupee, Tags } from "lucide-react";
+import { X, CheckCircle2, Clock, AlertTriangle, UserCircle2, ExternalLink, Check, Calendar as CalendarIcon, UserPlus, FileUp, ShieldCheck, IndianRupee, Tags, Users, TrendingUp, DollarSign, Heart, Music, Truck, Utensils, Palette, Plus, Trash2 } from "lucide-react";
 import { type Task } from "@/lib/models/schema";
 import { useStore } from "@/store/useStore";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -20,6 +20,116 @@ const statusConfig = {
   blocked: { label: "Blocked", color: "bg-slate-100 text-slate-600 border-slate-200" },
 };
 
+function SummaryCard({ task }: { task: Task }) {
+  const budgetCategories = useStore(state => state.budgetCategories);
+  const weddingInfo = useStore(state => state.weddingInfo);
+  
+  const category = budgetCategories.find(c => c.id === task.budgetCategoryId);
+  
+  if (!task.customActionType) return null;
+
+  const renderImpact = () => {
+    switch (task.customActionType) {
+      case 'catering_details':
+        const drift = category?.driftAmount || 0;
+        return (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                <Utensils size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Budget Impact</p>
+                <p className={cn("text-xs font-bold", drift > 0 ? "text-red-600" : "text-green-600")}>
+                  {drift > 0 ? `+${formatCurrency(drift)} drift` : "On track"}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Guests</p>
+              <p className="text-xs font-bold text-foreground">{weddingInfo.guests} pax</p>
+            </div>
+          </div>
+        );
+      case 'decor_concept':
+        return (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                <Palette size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vision Sync</p>
+                <p className="text-xs font-bold text-purple-700">
+                  {task.customActionData?.theme ? "Theme Locked" : "Defining Vibe"}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Confidence</p>
+              <p className="text-xs font-bold text-foreground">{category?.confidence || 'Low'}</p>
+            </div>
+          </div>
+        );
+      case 'logistics_pickups':
+        const arrivals = task.customActionData?.totalArrivals || 0;
+        return (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                <Truck size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Arrivals</p>
+                <p className="text-xs font-bold text-blue-700">{arrivals} Guests</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
+              <p className="text-xs font-bold text-foreground">{arrivals > 0 ? "Fleet Ready" : "Pending List"}</p>
+            </div>
+          </div>
+        );
+      case 'sangeet_setlist':
+        const songCount = task.customActionData?.songs?.length || 0;
+        return (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600">
+                <Music size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Program Length</p>
+                <p className="text-xs font-bold text-pink-700">{songCount * 4} mins approx.</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Items</p>
+              <p className="text-xs font-bold text-foreground">{songCount} Performances</p>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const impactContent = renderImpact();
+  if (!impactContent) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white border border-border/40 rounded-2xl p-4 shadow-sm"
+    >
+      {impactContent}
+    </motion.div>
+  );
+}
+
+
+
 export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
   const tasks = useStore(state => state.tasks);
   const completeTask = useStore(state => state.completeTask);
@@ -36,11 +146,12 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const [isReassignOpen, setIsReassignOpen] = useState(false);
-  const [isProofOpen, setIsProofOpen] = useState(false);
-  const [snoozeDays, setSnoozeDays] = useState(3);
-  const [proofData, setProofData] = useState({
+  const [isLogbookOpen, setIsLogbookOpen] = useState(false);
+  const weddingInfo = useStore(state => state.weddingInfo);
+  const [snoozeDays, setSnoozeDays] = useState(1);
+  const [logbookData, setLogbookData] = useState({
     amount: "",
-    docName: "Payment Receipt",
+    docName: "Booking Keepsake",
     notes: "",
     date: new Date().toISOString().split('T')[0]
   });
@@ -121,6 +232,23 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                 <p className="text-lg text-foreground leading-snug font-medium italic serif-gradient">"{task.whyItMatters}"</p>
               </section>
 
+              {/* Requirements */}
+              {task.requirements && task.requirements.length > 0 && (
+                <section>
+                  <h3 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-4">What's required?</h3>
+                  <div className="space-y-3">
+                    {task.requirements.map((req, i) => (
+                      <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-muted/10 border border-border/20 group/req hover:bg-muted/20 transition-all duration-300">
+                        <div className="w-6 h-6 rounded-lg bg-white border border-border/40 flex items-center justify-center text-[10px] font-bold text-muted-foreground group-hover/req:border-primary group-hover/req:text-primary transition-colors">
+                          {i + 1}
+                        </div>
+                        <span className="text-sm font-medium text-foreground/80 leading-snug">{req.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {/* Owner */}
               <section>
                 <h3 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-4">Who's handling this?</h3>
@@ -192,82 +320,451 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
 
               {/* Custom Action Areas */}
               {task.customActionType && (
-                <section className="bg-primary/5 border border-primary/20 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                <div className="space-y-4">
+                  {/* Summary Card for Impact Visualization */}
+                  <SummaryCard task={task} />
+                  
+                  <section className="bg-primary/5 border border-primary/20 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
                   
                   {task.customActionType === 'guest_count' && (
-                    <>
-                      <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-4 relative z-10">Estimated Guest Count</h3>
-                      <div className="flex gap-3 relative z-10">
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Balanced Guest Estimator</h3>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">
+                          <Users size={10} className="text-primary" />
+                          <span className="text-[9px] font-bold text-primary uppercase tracking-wider">Estimate Phase</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-5">
+                        {[
+                          { key: 'partner1Guests', label: `${partner1Name || 'P1'}'s Side`, icon: <UserCircle2 size={14} /> },
+                          { key: 'partner2Guests', label: `${partner2Name || 'P2'}'s Side`, icon: <UserCircle2 size={14} /> },
+                          { key: 'mutualGuests', label: 'Mutual Friends', icon: <Heart size={14} /> }
+                        ].map((side) => (
+                          <div key={side.key} className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <div className="text-primary/60">{side.icon}</div>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{side.label}</span>
+                              </div>
+                              <span className="text-xs font-bold text-primary">{task.customActionData?.[side.key] || 0}</span>
+                            </div>
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max="300" 
+                              step="5"
+                              className="w-full h-1.5 bg-primary/10 rounded-full appearance-none cursor-pointer accent-primary"
+                              value={task.customActionData?.[side.key] || 0}
+                              onChange={e => updateTaskCustomData(task.id, { ...task.customActionData, [side.key]: parseInt(e.target.value) })}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-5 border-t border-primary/10">
+                        <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-primary/5">
+                          <div>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-0.5">Total Crowd Size</p>
+                            <p className="text-2xl font-serif-display text-primary">
+                              {(task.customActionData?.partner1Guests || 0) + 
+                               (task.customActionData?.partner2Guests || 0) + 
+                               (task.customActionData?.mutualGuests || 0)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-1">Impact Level</p>
+                            <span className={cn(
+                              "text-[9px] px-2 py-1 rounded-lg font-bold uppercase",
+                              ((task.customActionData?.partner1Guests || 0) + (task.customActionData?.partner2Guests || 0) + (task.customActionData?.mutualGuests || 0)) > 250 
+                                ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"
+                            )}>
+                              {((task.customActionData?.partner1Guests || 0) + (task.customActionData?.partner2Guests || 0) + (task.customActionData?.mutualGuests || 0)) > 250 
+                                ? "High (Grand)" : "Low (Intimate)"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {task.customActionType === 'overall_budget' && (
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Total Wedding Budget</h3>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">
+                          <IndianRupee size={10} className="text-primary" />
+                          <span className="text-[9px] font-bold text-primary uppercase tracking-wider">Global Sync</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        {[
+                          { id: 'tier-1', label: 'Intimate', range: '15L - 25L', amount: 2000000 },
+                          { id: 'tier-2', label: 'Classic', range: '25L - 50L', amount: 3500000 },
+                          { id: 'tier-3', label: 'Grand', range: '50L+', amount: 6000000 },
+                        ].map(tier => (
+                          <button
+                            key={tier.id}
+                            onClick={() => updateTaskCustomData(task.id, { ...task.customActionData, amount: tier.amount })}
+                            className={cn(
+                              "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all active:scale-95",
+                              task.customActionData?.amount === tier.amount 
+                                ? "bg-primary border-primary text-white shadow-md shadow-primary/20" 
+                                : "bg-white border-primary/10 text-muted-foreground hover:border-primary/30"
+                            )}
+                          >
+                            <span className="text-[9px] font-bold uppercase tracking-tighter leading-none">{tier.label}</span>
+                            <span className="text-[8px] opacity-80 font-medium">{tier.range}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="relative">
+                        <IndianRupee size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" />
                         <input 
                           type="number" 
-                          className="flex-1 bg-white border border-primary/20 rounded-xl px-4 py-4 text-base font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:outline-none transition-all shadow-sm"
-                          placeholder="e.g. 150"
-                          value={task.customActionData?.count || ''}
-                          onChange={e => updateTaskCustomData(task.id, { ...task.customActionData, count: e.target.value })}
+                          className="w-full bg-white border border-primary/20 rounded-xl pl-11 pr-4 py-4 text-lg font-bold focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:outline-none transition-all shadow-sm"
+                          placeholder="Custom amount..."
+                          value={task.customActionData?.amount || ""}
+                          onChange={e => updateTaskCustomData(task.id, { ...task.customActionData, amount: parseInt(e.target.value) || 0 })}
                         />
                       </div>
-                    </>
+
+                      {task.customActionData?.amount > 0 && (
+                        <div className="space-y-3">
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mb-1">Standard Allocation Preview</p>
+                          <div className="flex h-3 w-full rounded-full overflow-hidden border border-white/40 shadow-inner">
+                            <div className="bg-primary w-[50%] h-full" title="Venue & Food: 50%" />
+                            <div className="bg-primary/60 w-[20%] h-full border-l border-white/20" title="Decor: 20%" />
+                            <div className="bg-primary/40 w-[15%] h-full border-l border-white/20" title="Photo/Video: 15%" />
+                            <div className="bg-primary/20 w-[15%] h-full border-l border-white/20" title="Misc: 15%" />
+                          </div>
+                          <div className="flex justify-between text-[8px] font-bold text-primary/60 uppercase">
+                            <span>Venue (50%)</span>
+                            <span>Other (50%)</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {task.customActionType === 'venue_shortlist' && (
-                    <>
-                      <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-4 relative z-10">Top Venue Choices</h3>
-                      <div className="space-y-4 relative z-10">
+                    <div className="space-y-5 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Priority Venue Shortlist</h3>
+                      </div>
+
+                      <div className="space-y-3">
                         {[1, 2, 3].map(priority => (
-                          <div key={priority} className="flex gap-3 items-center">
-                            <span className="text-xs font-bold text-primary/40 w-5">{priority}</span>
+                          <div key={priority} className="group flex gap-3 items-center bg-white/50 p-2 rounded-2xl border border-primary/5 hover:bg-white transition-all">
+                            <div className={cn(
+                              "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-bold border shrink-0 transition-colors",
+                              priority === 1 ? "bg-primary text-white border-primary" : "bg-primary/5 text-primary border-primary/10"
+                            )}>
+                              #{priority}
+                            </div>
                             <input 
                               type="text" 
-                              className="flex-1 bg-white border border-primary/20 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
-                              placeholder={`Preferred Venue ${priority}`}
+                              className="flex-1 bg-transparent border-none px-1 py-2 text-sm font-bold focus:outline-none placeholder:text-muted-foreground/30"
+                              placeholder={`Name of venue ${priority}...`}
                               value={task.customActionData?.[`venue${priority}`] || ''}
                               onChange={e => updateTaskCustomData(task.id, { ...task.customActionData, [`venue${priority}`]: e.target.value })}
                             />
-                            <button className="p-3 text-primary/60 hover:text-primary hover:bg-primary/10 bg-white border border-primary/20 rounded-xl transition-all active:scale-90" title={`Upload photos for choice ${priority}`}>
+                            <button className="w-10 h-10 flex items-center justify-center text-primary/40 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="Upload brochure/photos">
                               <FileUp size={16} />
                             </button>
                           </div>
                         ))}
                       </div>
-                    </>
+                    </div>
                   )}
 
                   {task.customActionType === 'invitation_designs' && (
-                    <>
-                      <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-4 relative z-10">Choose a Design</h3>
-                      <div className="grid grid-cols-2 gap-3 mb-4 relative z-10">
-                        {[1, 2, 3, 4].map(idx => (
+                    <div className="space-y-5 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Choose Theme Direction</h3>
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 rounded-full">
+                          <Check size={10} className="text-primary" />
+                          <span className="text-[8px] font-bold text-primary uppercase">No AI costs</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mb-2">
+                        {[
+                          { id: 1, name: 'Traditional Red', style: 'border-red-200 bg-red-50/30' },
+                          { id: 2, name: 'Royal Gold', style: 'border-amber-200 bg-amber-50/30' },
+                          { id: 3, name: 'Modern Minimal', style: 'border-slate-200 bg-slate-50/30' },
+                          { id: 4, name: 'Floral Garden', style: 'border-emerald-200 bg-emerald-50/30' },
+                        ].map(choice => (
                           <div 
-                            key={idx} 
+                            key={choice.id} 
                             className={cn(
-                              "aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden",
-                              task.customActionData?.selectedDesign === idx 
-                                ? "border-primary bg-white shadow-lg shadow-primary/10 scale-[1.02]" 
-                                : "border-primary/20 hover:border-primary/50 hover:bg-white/50"
+                              "aspect-[4/3] rounded-2xl border-2 p-4 flex flex-col justify-end cursor-pointer transition-all active:scale-[0.98]",
+                              choice.style,
+                              task.customActionData?.selectedDesign === choice.id 
+                                ? "border-primary bg-white shadow-lg ring-2 ring-primary/20" 
+                                : "hover:border-primary/40"
                             )}
-                            onClick={() => updateTaskCustomData(task.id, { ...task.customActionData, selectedDesign: idx })}
+                            onClick={() => updateTaskCustomData(task.id, { ...task.customActionData, selectedDesign: choice.id })}
                           >
-                            {task.customActionData?.designs?.[idx] ? (
-                               <div className="absolute inset-0 bg-muted flex items-center justify-center text-xs text-muted-foreground">Choice {idx}</div>
-                            ) : (
-                              <>
-                                <FileUp size={20} className="text-primary/30 mb-2 group-hover:scale-110 transition-transform" />
-                                <span className="text-[9px] font-bold text-primary/40 uppercase tracking-widest text-center px-2">Upload {idx}</span>
-                              </>
-                            )}
-                            {task.customActionData?.selectedDesign === idx && (
-                              <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-md">
-                                <Check size={12} className="text-white" strokeWidth={3} />
+                            <span className="text-[10px] font-bold text-foreground leading-tight">{choice.name}</span>
+                            {task.customActionData?.selectedDesign === choice.id && (
+                              <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                                <Check size={14} className="text-white" strokeWidth={3} />
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
-                      <p className="text-[10px] text-primary/60 font-bold uppercase tracking-widest text-center">Tap to select your favorite</p>
-                    </>
+                    </div>
                   )}
-                </section>
+
+                  {task.customActionType === 'catering_details' && (
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Catering & Menu Details</h3>
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 rounded-full">
+                          <Utensils size={10} className="text-primary" />
+                          <span className="text-[8px] font-bold text-primary uppercase">Auto-Calc</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Price Per Plate</span>
+                            <span className="text-sm font-bold text-primary">₹{task.customActionData?.perPlate || 0}</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="500" 
+                            max="5000" 
+                            step="100"
+                            className="w-full h-1.5 bg-primary/10 rounded-full appearance-none cursor-pointer accent-primary"
+                            value={task.customActionData?.perPlate || 1500}
+                            onChange={e => updateTaskCustomData(task.id, { ...task.customActionData, perPlate: parseInt(e.target.value) })}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-2">Cuisine Style</span>
+                          <div className="flex flex-wrap gap-2">
+                            {['Traditional', 'Fusion', 'Global', 'Organic'].map(style => (
+                              <button
+                                key={style}
+                                onClick={() => updateTaskCustomData(task.id, { ...task.customActionData, cuisine: style })}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all",
+                                  task.customActionData?.cuisine === style
+                                    ? "bg-primary border-primary text-white"
+                                    : "bg-white border-primary/10 text-primary hover:bg-primary/5"
+                                )}
+                              >
+                                {style}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {task.customActionType === 'decor_concept' && (
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Decor & Vibe Theme</h3>
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-primary/10 rounded-full">
+                          <Palette size={10} className="text-primary" />
+                          <span className="text-[8px] font-bold text-primary uppercase">Moodboard</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { name: 'Royal Rajputana', mood: 'Regal, Gold, Red' },
+                          { name: 'Tropical Paradise', mood: 'Green, Fresh, Floral' },
+                          { name: 'Ethereal White', mood: 'Minimal, Elegant, Glass' },
+                          { name: 'Boho Chic', mood: 'Vibrant, Warm, Earthy' }
+                        ].map(theme => (
+                          <button
+                            key={theme.name}
+                            onClick={() => updateTaskCustomData(task.id, { ...task.customActionData, theme: theme.name, mood: theme.mood })}
+                            className={cn(
+                              "p-4 rounded-2xl border-2 text-left transition-all",
+                              task.customActionData?.theme === theme.name
+                                ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                                : "bg-white border-primary/10 text-muted-foreground hover:border-primary/20"
+                            )}
+                          >
+                            <p className="text-[10px] font-bold uppercase mb-1">{theme.name}</p>
+                            <p className="text-[8px] opacity-80">{theme.mood}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {task.customActionType === 'sangeet_setlist' && (
+                    <div className="space-y-5 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Sangeet Setlist</h3>
+                        <button 
+                          onClick={() => {
+                            const songs = task.customActionData?.songs || [];
+                            updateTaskCustomData(task.id, { 
+                              ...task.customActionData, 
+                              songs: [...songs, { id: Date.now(), title: '', performers: '' }] 
+                            });
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-lg hover:bg-primary/20 transition-all"
+                        >
+                          <Plus size={12} className="text-primary" />
+                          <span className="text-[10px] font-bold text-primary uppercase">Add Song</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {(task.customActionData?.songs || []).map((song: any, idx: number) => (
+                          <div key={song.id} className="flex gap-2 items-start bg-white/50 p-3 rounded-xl border border-primary/10">
+                            <div className="flex-1 space-y-2">
+                              <input 
+                                type="text"
+                                placeholder="Song Title (e.g. Kala Chashma)"
+                                className="w-full bg-transparent border-none text-xs font-bold focus:outline-none placeholder:text-primary/20"
+                                value={song.title}
+                                onChange={e => {
+                                  const songs = [...task.customActionData.songs];
+                                  songs[idx].title = e.target.value;
+                                  updateTaskCustomData(task.id, { ...task.customActionData, songs });
+                                }}
+                              />
+                              <input 
+                                type="text"
+                                placeholder="Performers (e.g. Bride's Friends)"
+                                className="w-full bg-transparent border-none text-[10px] font-medium text-muted-foreground focus:outline-none placeholder:text-muted-foreground/30"
+                                value={song.performers}
+                                onChange={e => {
+                                  const songs = [...task.customActionData.songs];
+                                  songs[idx].performers = e.target.value;
+                                  updateTaskCustomData(task.id, { ...task.customActionData, songs });
+                                }}
+                              />
+                            </div>
+                            <button 
+                              onClick={() => {
+                                const songs = task.customActionData.songs.filter((_: any, i: number) => i !== idx);
+                                updateTaskCustomData(task.id, { ...task.customActionData, songs });
+                              }}
+                              className="text-red-300 hover:text-red-500 p-1"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        {(!task.customActionData?.songs || task.customActionData.songs.length === 0) && (
+                          <div className="text-center py-6 border-2 border-dashed border-primary/10 rounded-xl">
+                            <Music size={24} className="mx-auto text-primary/20 mb-2" />
+                            <p className="text-[10px] font-bold text-primary/40 uppercase">No songs added yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {task.customActionType === 'logistics_pickups' && (
+                    <div className="space-y-5 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold">Airport/Station Pickups</h3>
+                        <button 
+                          onClick={() => {
+                            const pickups = task.customActionData?.pickups || [];
+                            updateTaskCustomData(task.id, { 
+                              ...task.customActionData, 
+                              pickups: [...pickups, { id: Date.now(), time: '', guests: 1, name: '' }] 
+                            });
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-lg hover:bg-primary/20 transition-all"
+                        >
+                          <Plus size={12} className="text-primary" />
+                          <span className="text-[10px] font-bold text-primary uppercase">Add Pickup</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {(task.customActionData?.pickups || []).map((p: any, idx: number) => (
+                          <div key={p.id} className="grid grid-cols-12 gap-2 bg-white/50 p-3 rounded-xl border border-primary/10 items-center">
+                            <div className="col-span-3">
+                              <input 
+                                type="text"
+                                placeholder="Time"
+                                className="w-full bg-transparent border-none text-xs font-bold focus:outline-none"
+                                value={p.time}
+                                onChange={e => {
+                                  const pickups = [...task.customActionData.pickups];
+                                  pickups[idx].time = e.target.value;
+                                  updateTaskCustomData(task.id, { ...task.customActionData, pickups });
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-6 border-l border-primary/10 pl-2">
+                              <input 
+                                type="text"
+                                placeholder="Guest Name"
+                                className="w-full bg-transparent border-none text-xs font-medium focus:outline-none"
+                                value={p.name}
+                                onChange={e => {
+                                  const pickups = [...task.customActionData.pickups];
+                                  pickups[idx].name = e.target.value;
+                                  updateTaskCustomData(task.id, { ...task.customActionData, pickups });
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-2 flex items-center gap-1 border-l border-primary/10 pl-2">
+                              <Users size={10} className="text-primary/40" />
+                              <input 
+                                type="number"
+                                className="w-full bg-transparent border-none text-xs font-bold focus:outline-none"
+                                value={p.guests}
+                                onChange={e => {
+                                  const pickups = [...task.customActionData.pickups];
+                                  pickups[idx].guests = parseInt(e.target.value) || 0;
+                                  updateTaskCustomData(task.id, { ...task.customActionData, pickups });
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-1 text-right">
+                              <button 
+                                onClick={() => {
+                                  const pickups = task.customActionData.pickups.filter((_: any, i: number) => i !== idx);
+                                  updateTaskCustomData(task.id, { ...task.customActionData, pickups });
+                                }}
+                                className="text-red-300 hover:text-red-500"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {task.customActionData?.totalArrivals > 0 && (
+                          <div className="flex justify-between items-center px-4 py-3 bg-primary/10 rounded-xl border border-primary/20">
+                            <span className="text-[10px] font-bold text-primary uppercase">Total Arrivals Planned</span>
+                            <span className="text-sm font-bold text-primary">{task.customActionData.totalArrivals} guests</span>
+                          </div>
+                        )}
+                        {(!task.customActionData?.pickups || task.customActionData.pickups.length === 0) && (
+                          <div className="text-center py-6 border-2 border-dashed border-primary/10 rounded-xl">
+                            <Truck size={24} className="mx-auto text-primary/20 mb-2" />
+                            <p className="text-[10px] font-bold text-primary/40 uppercase">No pickups scheduled</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  </section>
+                </div>
               )}
 
               {/* Financial Context */}
@@ -326,15 +823,15 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                 </section>
               )}
 
-              {/* Proof Upload Area */}
+              {/* Documentation & Logbook */}
               <button 
-                onClick={() => setIsProofOpen(true)}
+                onClick={() => setIsLogbookOpen(true)}
                 className="w-full py-5 px-6 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex items-center justify-center gap-3 text-xs font-bold text-primary hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-[0.98] group"
               >
                 <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow-md transition-all">
                   <ShieldCheck size={18} />
                 </div>
-                Save Progress & Proof
+                {task.customActionType === 'guest_count' ? 'Finalize Guest Numbers' : (task.category === 'Finance' || task.estimatedCost) ? 'Record Payment & Save Keepsake' : 'Add Update to Logbook'}
               </button>
             </div>
 
@@ -478,7 +975,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                 </motion.div>
               )}
 
-              {isProofOpen && (
+              {isLogbookOpen && (
                 <motion.div 
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
@@ -491,12 +988,12 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                         <ShieldCheck size={22} />
                       </div>
                       <div>
-                        <h4 className="text-xl font-serif-display tracking-tight">Record Progress</h4>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.15em]">Wedding Logbook</p>
+                        <h4 className="text-xl font-serif-display tracking-tight">{task.customActionType === 'guest_count' ? 'Confirm Final Numbers' : 'Add to Wedding Logbook'}</h4>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.15em]">Memory & Evidence</p>
                       </div>
                     </div>
                     <button 
-                      onClick={() => setIsProofOpen(false)}
+                      onClick={() => setIsLogbookOpen(false)}
                       className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-full transition-all"
                     >
                       <X size={22} />
@@ -511,8 +1008,8 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                           type="number" 
                           placeholder="Final number..."
                           className="w-full bg-muted/30 border border-transparent rounded-2xl px-5 py-5 text-sm font-bold focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:outline-none transition-all"
-                          value={proofData.amount}
-                          onChange={(e) => setProofData({...proofData, amount: e.target.value})}
+                          value={logbookData.amount}
+                          onChange={(e) => setLogbookData({...logbookData, amount: e.target.value})}
                         />
                       </div>
                     ) : (task.category === 'Finance' || (task.estimatedCost && !task.customActionType)) ? (
@@ -525,8 +1022,8 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                               type="number" 
                               placeholder="0.00"
                               className="w-full bg-muted/30 border border-transparent rounded-2xl pl-10 pr-4 py-5 text-sm font-bold focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 focus:outline-none transition-all"
-                              value={proofData.amount}
-                              onChange={(e) => setProofData({...proofData, amount: e.target.value})}
+                              value={logbookData.amount}
+                              onChange={(e) => setLogbookData({...logbookData, amount: e.target.value})}
                             />
                           </div>
                         </div>
@@ -535,8 +1032,8 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                           <input 
                             type="date" 
                             className="w-full bg-muted/30 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
-                            value={proofData.date}
-                            onChange={(e) => setProofData({...proofData, date: e.target.value})}
+                            value={logbookData.date}
+                            onChange={(e) => setLogbookData({...logbookData, date: e.target.value})}
                           />
                         </div>
                       </div>
@@ -546,24 +1043,39 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                         <input 
                           type="date" 
                           className="w-full bg-muted/30 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all"
-                          value={proofData.date}
-                          onChange={(e) => setProofData({...proofData, date: e.target.value})}
+                          value={logbookData.date}
+                          onChange={(e) => setLogbookData({...logbookData, date: e.target.value})}
                         />
                       </div>
                     )}
 
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1 tracking-widest">Attachment Type</label>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1 tracking-widest">Documentation Type</label>
                       <select 
                         className="w-full bg-muted/30 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
-                        value={proofData.docName}
-                        onChange={(e) => setProofData({...proofData, docName: e.target.value})}
+                        value={logbookData.docName}
+                        onChange={(e) => setLogbookData({...logbookData, docName: e.target.value})}
                       >
-                        <option>Payment Receipt</option>
-                        <option>Signed Contract</option>
-                        <option>Final Guest List</option>
-                        <option>Menu Selection</option>
-                        <option>Booking Confirmation</option>
+                        {(task.category === 'Finance' || task.estimatedCost) ? (
+                          <>
+                            <option>Booking Keepsake</option>
+                            <option>Signed Contract</option>
+                            <option>Booking Confirmation</option>
+                            <option>Invoice</option>
+                          </>
+                        ) : task.customActionType === 'guest_count' ? (
+                          <>
+                            <option>Final Guest List</option>
+                            <option>RSVP Export</option>
+                          </>
+                        ) : (
+                          <>
+                            <option>Menu Selection</option>
+                            <option>Moodboard Link</option>
+                            <option>Email Confirmation</option>
+                            <option>General Update</option>
+                          </>
+                        )}
                       </select>
                     </div>
 
@@ -572,28 +1084,28 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                       <textarea 
                         placeholder="Add notes, terms, or things to remember..."
                         className="w-full bg-muted/30 border-none rounded-2xl p-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all resize-none h-40"
-                        value={proofData.notes}
-                        onChange={(e) => setProofData({...proofData, notes: e.target.value})}
+                        value={logbookData.notes}
+                        onChange={(e) => setLogbookData({...logbookData, notes: e.target.value})}
                       />
                     </div>
                   </div>
 
                   <button 
-                    disabled={!proofData.docName}
+                    disabled={!logbookData.docName}
                     onClick={() => {
                       addProofToTask(task.id, { 
-                        docName: proofData.docName,
-                        amount: proofData.amount ? parseFloat(proofData.amount) : undefined,
-                        date: proofData.date,
-                        notes: proofData.notes
+                        docName: logbookData.docName,
+                        amount: logbookData.amount ? parseFloat(logbookData.amount) : undefined,
+                        date: logbookData.date,
+                        notes: logbookData.notes
                       });
-                      if (proofData.amount) {
-                        updateTaskActualCost(task.id, parseFloat(proofData.amount));
+                      if (logbookData.amount) {
+                        updateTaskActualCost(task.id, parseFloat(logbookData.amount));
                       }
-                      setIsProofOpen(false);
-                      setProofData({
+                      setIsLogbookOpen(false);
+                      setLogbookData({
                         amount: "",
-                        docName: "Payment Receipt",
+                        docName: "Booking Keepsake",
                         notes: "",
                         date: new Date().toISOString().split('T')[0]
                       });
@@ -601,7 +1113,7 @@ export function TaskDrawer({ taskId, onClose }: TaskDrawerProps) {
                     className="w-full h-16 mt-10 bg-primary text-white font-bold rounded-2xl shadow-2xl shadow-primary/20 disabled:opacity-50 active:scale-[0.97] transition-all flex items-center justify-center gap-3 border border-white/20"
                   >
                     <Check size={20} strokeWidth={3} />
-                    Commit to Logbook
+                    Commit to Celebration Log
                   </button>
                 </motion.div>
               )}

@@ -35,8 +35,9 @@ export interface Task {
   actualCost?: number;
   isMilestone?: boolean;
   budgetCategoryId?: string;
-  customActionType?: "guest_count" | "venue_shortlist" | "invitation_designs";
+  customActionType?: "guest_count" | "venue_shortlist" | "invitation_designs" | "overall_budget" | "catering_details" | "decor_concept" | "sangeet_setlist" | "logistics_pickups";
   customActionData?: any;
+  requirements?: { text: string; completed: boolean }[];
 }
 
 export interface BudgetScenario {
@@ -74,7 +75,7 @@ export interface BudgetUpdate {
   amount: number;
   date: string;
   description: string;
-  type: "increase" | "decrease" | "reallocation";
+  type: "increase" | "decrease" | "reallocation" | "progress";
 }
 
 export interface BudgetWatchout {
@@ -113,11 +114,14 @@ export interface Stakeholder {
 export interface Reminder {
   id: string;
   recipient: string;
+  recipientId?: string;
   role: string;
   channel: "email" | "whatsapp" | "sms";
   task: string;
+  taskId?: string;
   status: "scheduled" | "sent" | "viewed" | "responded";
   scheduledFor: string;
+  lastSent?: string;
 }
 
 export interface Activity {
@@ -126,6 +130,7 @@ export interface Activity {
   description: string;
   icon: "vendor" | "couple" | "system" | "family" | "stakeholder" | "reminder";
   actor: string;
+  metadata?: Record<string, any>;
 }
 
 export interface RiskAssistance {
@@ -164,4 +169,5 @@ export interface WeddingInfo {
   partner1Rashi?: Rashi;
   partner2Rashi?: Rashi;
   lockedDates?: Record<string, string>;
+  visionSummary?: string;
 }

@@ -42,9 +42,21 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "wouter"],
+          "vendor-framer": ["framer-motion"],
+          "vendor-lucide": ["lucide-react"],
+          "vendor-charts": ["recharts"],
+          "vendor-ui": ["@radix-ui/react-accordion", "@radix-ui/react-dialog", "@radix-ui/react-popover"],
+          "vendor-utils": ["clsx", "tailwind-merge", "date-fns"]
+        }
+      }
+    }
   },
   server: {
     port,

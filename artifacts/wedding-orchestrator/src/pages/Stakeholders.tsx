@@ -13,15 +13,22 @@ const tabs = ["All", "Vendors", "Family & Friends"];
 
 export default function Stakeholders() {
   const stakeholders = useStore(state => state.stakeholders);
+  const aestheticMode = useStore(state => state.getAestheticMode());
   const [activeTab, setActiveTab] = useState("All");
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerTemplateId, setComposerTemplateId] = useState<string | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleOpenComposer = (templateId?: string) => {
+    setComposerTemplateId(templateId);
+    setIsComposerOpen(true);
+  };
 
   const filtered = stakeholders.filter((s) => {
     if (activeTab === "Vendors") return s.type === "vendor";
@@ -83,7 +90,8 @@ export default function Stakeholders() {
           stakeholder={selectedStakeholder}
           onClose={() => setSelectedStakeholder(null)}
           onOpenTask={(id) => setOpenTaskId(id)}
-          onOpenComposer={() => setIsComposerOpen(true)}
+          onOpenComposer={handleOpenComposer}
+          aestheticMode={aestheticMode}
         />
       )}
 
@@ -95,7 +103,11 @@ export default function Stakeholders() {
         <CommunicationComposer
           stakeholder={selectedStakeholder}
           isOpen={isComposerOpen}
-          onClose={() => setIsComposerOpen(false)}
+          initialTemplateId={composerTemplateId}
+          onClose={() => {
+            setIsComposerOpen(false);
+            setComposerTemplateId(undefined);
+          }}
         />
       )}
     </Layout>
@@ -176,13 +188,16 @@ function StakeholderDetail({
   onClose,
   onOpenTask,
   onOpenComposer,
+  aestheticMode
 }: {
   stakeholder: Stakeholder;
   onClose: () => void;
   onOpenTask: (id: string) => void;
-  onOpenComposer: () => void;
+  onOpenComposer: (templateId?: string) => void;
+  aestheticMode: string;
 }) {
   const tasks = useStore(state => state.tasks);
+  const snoozeTask = useStore(state => state.snoozeTask);
   const stakeholderTasks = tasks.filter((t) => stakeholder.tasks.includes(t.id));
   const [isHandoffPreviewOpen, setIsHandoffPreviewOpen] = useState(false);
 
@@ -261,9 +276,15 @@ function StakeholderDetail({
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      useStore.getState().snoozeTask(task.id, 7);
+                      snoozeTask(task.id, 7);
+                      onOpenComposer("snooze");
                     }}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-600 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider"
+                    className={cn(
+                      "absolute right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm border",
+                      aestheticMode === "serene" 
+                        ? "bg-indigo-50 border-indigo-100 text-indigo-600 hover:bg-indigo-100" 
+                        : "bg-amber-50 border-amber-100 text-amber-600 hover:bg-amber-100"
+                    )}
                   >
                     Snooze
                   </button>
@@ -289,8 +310,15 @@ function StakeholderDetail({
             </button>
           )}
           <button
-            onClick={onOpenComposer}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+            onClick={() => onOpenComposer()}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 px-4 py-2.5 text-white text-sm font-semibold rounded-xl transition-all shadow-lg",
+              aestheticMode === "serene" 
+                ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20" 
+                : aestheticMode === "velocity"
+                  ? "bg-rose-600 hover:bg-rose-700 shadow-rose-500/20"
+                  : "bg-slate-800 hover:bg-slate-900 shadow-slate-500/10"
+            )}
             data-testid="btn-open-composer"
           >
             <MessageSquare size={16} />
@@ -373,17 +401,22 @@ function HandoffPreviewModal({ stakeholder, onClose, onSend }: { stakeholder: St
             <section>
               <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Event Vision</h4>
               <div className="space-y-3">
-                {events.slice(0, 2).map(e => (
-                  <div key={e.id} className="p-4 rounded-xl bg-muted border border-border/50">
+                {events.filter(e => !!e.visionSummary).map(e => (
+                  <div key={e.id} className="p-4 rounded-xl bg-muted/50 border border-border/50">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-bold">{e.name}</p>
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold uppercase">{e.vibe || 'Serene'}</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed italic">
-                      "{e.visionSummary || e.vibe || "A unique celebration tailored to our story."}"
+                      "{e.visionSummary}"
                     </p>
                   </div>
                 ))}
+                {events.filter(e => !e.visionSummary).length > 0 && (
+                  <div className="p-4 rounded-xl bg-muted/30 border border-dashed border-border/50">
+                    <p className="text-[10px] text-muted-foreground italic text-center">Remaining event visions will be auto-generated upon send.</p>
+                  </div>
+                )}
               </div>
             </section>
 

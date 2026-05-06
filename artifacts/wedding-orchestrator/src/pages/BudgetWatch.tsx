@@ -24,6 +24,7 @@ import { BudgetRefinementModal } from "@/components/BudgetRefinementModal";
 import { BudgetDetailDrawer } from "@/components/BudgetDetailDrawer";
 import { BudgetCategory } from "@/lib/models/schema";
 import { Heart, Target, Lightbulb, PenLine, Shield, ShieldCheck, Zap, Lock, Unlock, Search, HeartHandshake, Compass, Coins, Save, History, RefreshCcw, Wallet } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function BudgetWatch() {
   const weddingInfo = useStore((state) => state.weddingInfo);
@@ -219,28 +220,49 @@ export default function BudgetWatch() {
 
   return (
     <Layout>
-      <div className="max-w-screen-xl mx-auto px-8 py-8 lg:py-12">
+      <div className={cn(
+        "max-w-screen-xl mx-auto px-8 py-8 lg:py-12 transition-colors duration-700",
+        weddingInfo.budgetPhase === 'dreaming' ? "bg-rose-50/30" : "bg-slate-50/30"
+      )}>
         {/* Phase Toggle & Pace Indicator */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
           <div className="flex bg-white/50 backdrop-blur-sm p-1 rounded-2xl border border-white/20 shadow-sm self-start">
-            {[
-              { id: "dreaming", label: "Dreaming", icon: Compass },
-              { id: "tracking", label: "Tracking", icon: Target },
-            ].map((phase) => (
-              <button
-                key={phase.id}
-                onClick={() => useStore.getState().setBudgetPhase(phase.id as any)}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 text-xs font-bold uppercase tracking-widest",
-                  weddingInfo.budgetPhase === phase.id
-                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                    : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-                )}
-              >
-                <phase.icon className="w-3.5 h-3.5" />
-                {phase.label}
-              </button>
-            ))}
+            <TooltipProvider delayDuration={300}>
+              {[
+                { 
+                  id: "dreaming", 
+                  label: "Dreaming", 
+                  icon: Compass,
+                  description: "Imagine, explore and allocate your funds without commitment. Perfect for early visioning."
+                },
+                { 
+                  id: "tracking", 
+                  label: "Tracking", 
+                  icon: Target,
+                  description: "Monitor actual spend, record payments and keep your execution on course."
+                },
+              ].map((phase) => (
+                <Tooltip key={phase.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => useStore.getState().setBudgetPhase(phase.id as any)}
+                      className={cn(
+                        "flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 text-xs font-bold uppercase tracking-widest",
+                        weddingInfo.budgetPhase === phase.id
+                          ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                          : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                      )}
+                    >
+                      <phase.icon className="w-3.5 h-3.5" />
+                      {phase.label}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[200px] bg-slate-900 text-white border-none p-3 rounded-xl shadow-xl">
+                    <p className="text-[10px] leading-relaxed">{phase.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
           </div>
 
           <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -264,7 +286,7 @@ export default function BudgetWatch() {
               <p className="text-[9px] uppercase font-bold tracking-widest text-slate-400 leading-none mb-1">Our Tempo</p>
               <p className="text-xs font-bold text-slate-700 capitalize">
                 {weddingInfo.planningPace === "serene" || weddingInfo.planningPace === "steady" ? "Steady Flow" : 
-                 weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? "Swift Progress" : 
+                 weddingInfo.planningPace === "brisk" || weddingInfo.planningPace === "sprint" ? "Brisk Celebration Prep" : 
                  "Final Countdown"}: {weddingInfo.daysLeft} Days
               </p>
             </div>
@@ -326,7 +348,7 @@ export default function BudgetWatch() {
         </div>
 
         {/* Summary Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             {
               label: "Our Dream Fund",
@@ -368,23 +390,24 @@ export default function BudgetWatch() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               className={cn(
-                "p-5 rounded-[1.8rem] border border-white/20 shadow-sm backdrop-blur-sm",
+                "p-4 rounded-2xl border border-white/20 shadow-sm backdrop-blur-sm relative",
                 item.bg,
               )}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="p-1.5 rounded-lg bg-white/50">
-                  <item.icon className={cn("w-3.5 h-3.5", item.color)} />
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="p-1 rounded-md bg-white/50">
+                  <item.icon className={cn("w-3 h-3", item.color)} />
                 </div>
+                <p className="text-[8px] uppercase tracking-widest text-muted-foreground font-bold leading-none">
+                  {item.label}
+                </p>
                 {item.id === "forecast" && (
-                  <span className="text-[8px] font-bold text-muted-foreground bg-white/50 px-1.5 py-0.5 rounded-full uppercase">
+                  <span className="text-[7px] font-bold text-muted-foreground bg-white/50 px-1 py-0.5 rounded-full uppercase ml-auto">
                     Live
                   </span>
                 )}
               </div>
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-0.5">
-                {item.label}
-              </p>
+
               {item.label === "Our Dream Fund" ? (
                 <div className="relative group">
                   {isEditingBudget ? (
@@ -403,22 +426,22 @@ export default function BudgetWatch() {
                           setIsEditingBudget(false);
                         }
                       }}
-                      className="text-xl font-serif-display bg-white/50 rounded px-1 w-full border-none focus:ring-0"
+                      className="text-lg font-bold tabular-nums bg-white/50 rounded px-1 w-full border-none focus:ring-0 h-7"
                     />
                   ) : (
                     <div 
                       onClick={() => setIsEditingBudget(true)}
-                      className="flex items-center gap-2 cursor-pointer group-hover:text-primary transition-colors"
+                      className="flex items-center gap-1.5 cursor-pointer group-hover:text-primary transition-colors h-7"
                     >
-                      <p className={cn("text-xl font-serif-display", item.color)}>
+                      <p className={cn("text-lg font-bold tabular-nums", item.color)}>
                         {formatCurrency(item.value)}
                       </p>
-                      <PenLine className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <PenLine className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   )}
                 </div>
               ) : (
-                <p className={cn("text-xl font-serif-display", item.color)}>
+                <p className={cn("text-lg font-bold tabular-nums h-7 flex items-center", item.color)}>
                   {formatCurrency(item.value)}
                 </p>
               )}
@@ -477,7 +500,7 @@ export default function BudgetWatch() {
                 <div className="text-center relative z-10">
                   <span className="text-3xl font-serif-display block">{Math.round(visionAlignmentScore)}%</span>
                   <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                    {weddingInfo.budgetPhase === 'dreaming' ? 'Aligned' : 'Healthy'}
+                    {weddingInfo.budgetPhase === 'dreaming' ? 'Vision Alignment' : 'Booking Confidence'}
                   </span>
                   <div className="mt-1 flex flex-col items-center">
                     <div className="flex items-center gap-1">
@@ -748,9 +771,9 @@ export default function BudgetWatch() {
                         )}
                       >
                         {f === 'all' ? 'Everything' : 
-                         f === 'core' ? 'Core Vibe' : 
-                         f === 'refining' ? 'Refining' : 
-                         f === 'delights' ? 'Delights' :
+                         f === 'core' ? 'Non-Negotiable' : 
+                         f === 'refining' ? 'Room for Magic' : 
+                         f === 'delights' ? 'Pure Luxury' :
                          f === 'review' ? 'Gentle Review' :
                          f === 'upcoming' ? 'Next Steps' : 'Solid Ground'}
                       </button>
@@ -829,7 +852,9 @@ export default function BudgetWatch() {
                                   category.priority === 'nice_to_have' ? "bg-indigo-50 text-indigo-600 border border-indigo-100" :
                                   "bg-slate-50 text-slate-400 border border-slate-100"
                                 )}>
-                                  {category.priority?.replace('_', ' ') || 'Planning'}
+                                  {category.priority === 'must_have' ? "Non-Negotiable" :
+                                   category.priority === 'nice_to_have' ? "Room for Magic" :
+                                   category.priority === 'luxury' ? "Pure Luxury" : "Planning"}
                                 </span>
                                 <span className={cn(
                                   "text-[7px] font-bold uppercase px-1.5 py-0.5 rounded-full",
@@ -837,7 +862,9 @@ export default function BudgetWatch() {
                                   category.confidence === 'medium' ? "bg-amber-50 text-amber-600 border border-amber-100" :
                                   "bg-rose-50 text-rose-600 border border-rose-100"
                                 )}>
-                                  {category.confidence} Confidence
+                                  {category.confidence === 'high' ? "Locked In" :
+                                   category.confidence === 'medium' ? "Shaping" :
+                                   "Sketching"} Confidence
                                 </span>
                               </>
                             ) : (

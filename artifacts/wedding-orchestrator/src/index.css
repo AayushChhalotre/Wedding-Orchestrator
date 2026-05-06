@@ -192,20 +192,20 @@
 
 /* Sparsh Insight: Velocity Mode (< 2 Months) */
 .mode-velocity {
-  --background: 220 15% 10%; /* Dark Slate */
-  --foreground: 210 20% 98%;
+  --background: 220 20% 98%; /* Light Slate (Changed from dark) */
+  --foreground: 220 25% 15%;
   --primary: 38 90% 55%;     /* High-contrast Amber */
-  --secondary: 220 20% 20%;
+  --secondary: 38 30% 90%;
   --accent: 38 90% 55%;
-  --muted: 220 15% 15%;
-  --muted-foreground: 220 10% 60%;
-  --card: 220 20% 12%;
-  --card-border: 220 20% 18%;
-  --border: 220 20% 18%;
-  --input: 220 20% 20%;
+  --muted: 220 15% 94%;
+  --muted-foreground: 220 10% 45%;
+  --card: 0 0% 100%;
+  --card-border: 38 20% 85%;
+  --border: 38 20% 85%;
+  --input: 38 20% 88%;
   --app-font-sans: 'Inter', sans-serif;
   --radius: 0.5rem;          /* Sharp, focused corners */
-  --sidebar: 225 50% 5%;
+  --sidebar: 225 40% 12%;
 }
 
 @layer base {

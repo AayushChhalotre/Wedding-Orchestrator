@@ -113,6 +113,7 @@ export interface AppState {
   isAuthClaimed: boolean;
   
   lastCompletedTaskId: string | null;
+  lastBulkSendTimestamp: number | null;
   
   // Actions
   updateWeddingInfo: (info: Partial<AppWeddingInfo>) => void;
@@ -122,6 +123,9 @@ export interface AppState {
   addProofToTask: (taskId: string, proof: { amount?: number, docName: string, notes?: string, date: string }) => void;
   submitVendorData: (taskId: string) => void;
   sendReminder: (reminderId: string) => void;
+  bulkSendReminders: (reminderIds: string[], messages: Record<string, string>, channel: "whatsapp" | "email") => void;
+  logCommunication: (stakeholderId: string, channel: "whatsapp" | "email", templateId: string, body: string) => void;
+  getBulkSendCooldown: () => number; // seconds remaining
   
   updateBudgetCategory: (categoryId: string, updates: Partial<BudgetCategory>) => void;
   updateBudgetEstimate: (categoryId: string, estimate: number, priority?: BudgetCategory["priority"]) => void;
@@ -190,7 +194,6 @@ export interface AppState {
     lockedCount: number;
     totalCount: number;
   };
-  setBudgetPhase: (phase: BudgetPhase) => void;
   getBudgetActionables: () => {
     id: string;
     category: string;
@@ -208,6 +211,7 @@ export interface AppState {
   generateVisionSummary: (eventId: string) => void;
   suggestPlanningPace: (daysLeft: number) => PlanningPace;
   getAestheticMode: () => "serene" | "balanced" | "velocity";
+  updateStakeholderContact: (stakeholderId: string, updates: { email?: string; phone?: string }) => void;
 }
 
 /**
@@ -310,6 +314,7 @@ export const useStore = create<AppState>()(
   })(),
   isAuthClaimed: false,
   lastCompletedTaskId: null,
+  lastBulkSendTimestamp: null,
 
   detectAdvancedRisks: () => {
     const { tasks, weddingInfo, stakeholders, budgetCategories } = get();
@@ -474,11 +479,16 @@ export const useStore = create<AppState>()(
     // 5. NEW: Spending Velocity Risk
     const totalSpentVelocity = budgetCategories.reduce((acc, cat) => acc + cat.actual, 0);
     const totalForecast = budgetCategories.reduce((acc, cat) => acc + cat.forecast, 0);
-    const daysLeft = weddingInfo.daysLeft;
+    const weddingDate = weddingInfo.weddingDate ? new Date(weddingInfo.weddingDate) : null;
+    const createdAt = weddingInfo.createdAt ? new Date(weddingInfo.createdAt) : new Date(Date.now() - 270 * 24 * 60 * 60 * 1000);
     
-    // Assume a 270-day (9 month) planning cycle if we don't have a start date
-    const estimatedTotalDays = 270; 
-    const timeElapsedPercent = Math.min(1, (estimatedTotalDays - daysLeft) / estimatedTotalDays);
+    let timeElapsedPercent = 0.5; // Default fallback
+    if (weddingDate && isValid(weddingDate) && isValid(createdAt)) {
+      const totalPlanningDays = (weddingDate.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      const daysElapsed = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      timeElapsedPercent = Math.min(1, Math.max(0, daysElapsed / totalPlanningDays));
+    }
+    
     const budgetSpentPercent = totalSpentVelocity / budgetValue;
 
     if (budgetSpentPercent > timeElapsedPercent + 0.15 && timeElapsedPercent > 0.1) {
@@ -486,7 +496,7 @@ export const useStore = create<AppState>()(
         id: "velocity-risk-1",
         type: "budget",
         title: "Check Your Speed",
-        explanation: `You've spent ${Math.round(budgetSpentPercent * 100)}% of your budget, but you're only ${Math.round(timeElapsedPercent * 100)}% through the timeline.`,
+        explanation: `You've spent ${Math.round(budgetSpentPercent * 100)}% of your budget, but you're only ${Math.round(timeElapsedPercent * 100)}% through your planning journey.`,
         impact: "At this rate, you might run out of funds for the final 'home stretch' details.",
         cta: "Adjust Spending Pace",
         severity: "high",
@@ -514,6 +524,44 @@ export const useStore = create<AppState>()(
         ]
       });
     }
+    
+    // 7. NEW: Communication Overload Risk
+    const { reminders } = get();
+    const sentRemindersRecently = reminders.filter(r => {
+      if (r.status !== "sent" || !r.lastSent) return false;
+      const sentDate = new Date(r.lastSent);
+      return (today.getTime() - sentDate.getTime()) < (48 * 60 * 60 * 1000); // 48 hours
+    });
+    
+    const recipientCounts: Record<string, number> = {};
+    sentRemindersRecently.forEach(r => {
+      recipientCounts[r.recipient] = (recipientCounts[r.recipient] || 0) + 1;
+    });
+    
+    Object.entries(recipientCounts).forEach(([name, count]) => {
+      if (count >= 3) {
+        newRisks.push({
+          id: `overload-risk-${name.replace(/\s+/g, '-')}`,
+          type: "burnout",
+          title: "Communication Overload",
+          explanation: `You've sent ${count} reminders to ${name} in the last 48 hours.`,
+          impact: "Too many nudges might lead to vendor frustration or 'reminder fatigue'.",
+          cta: "Pause & Personalize",
+          severity: "medium",
+          suggestedAssistance: [
+            "Snooze further reminders for 3 days",
+            "Give them a quick call instead of another message"
+          ],
+          assistanceResources: [
+            {
+              text: "Slow down: Snooze reminders for this stakeholder",
+              link: "/stakeholders",
+              linkText: "Manage Stakeholders"
+            }
+          ]
+        });
+      }
+    });
     
     set({ risks: [...newRisks] });
   },
@@ -604,12 +652,22 @@ export const useStore = create<AppState>()(
         t.id === taskId ? { ...t, status: "done" as const } : t
       );
       
-      // Update Budget if task has cost
       const completedTask = state.tasks.find(t => t.id === taskId);
-      if (completedTask && completedTask.budgetCategoryId && completedTask.estimatedCost) {
-        const actualCost = completedTask.actualCost || completedTask.estimatedCost;
-        
-        // Update category actuals
+      if (!completedTask) return { tasks: newTasks };
+
+      const categoryName = state.budgetCategories.find(c => c.id === completedTask.budgetCategoryId)?.name || completedTask.category;
+      const actualCost = completedTask.actualCost || completedTask.estimatedCost || 0;
+      
+      const update: any = {
+        id: `bu-${Date.now()}`,
+        categoryName,
+        amount: actualCost,
+        date: new Date().toISOString().split('T')[0],
+        description: `Successfully checked off: ${completedTask.title}`,
+        type: actualCost > 0 ? "increase" : "progress"
+      };
+
+      if (completedTask.budgetCategoryId && actualCost > 0) {
         return {
           tasks: newTasks,
           lastCompletedTaskId: taskId,
@@ -618,21 +676,15 @@ export const useStore = create<AppState>()(
               ? { ...cat, actual: cat.actual + actualCost }
               : cat
           ),
-          budgetUpdates: [
-            {
-              id: `bu-${Date.now()}`,
-              categoryName: state.budgetCategories.find(c => c.id === completedTask.budgetCategoryId)?.name || "Unknown",
-              amount: actualCost,
-              date: new Date().toISOString().split('T')[0],
-              description: `Successfully checked off: ${completedTask.title}`,
-              type: "reallocation" as const
-            },
-            ...state.budgetUpdates
-          ]
+          budgetUpdates: [update, ...state.budgetUpdates]
         };
       }
 
-      return { tasks: newTasks, lastCompletedTaskId: taskId };
+      return { 
+        tasks: newTasks, 
+        lastCompletedTaskId: taskId,
+        budgetUpdates: [update, ...state.budgetUpdates]
+      };
     });
     
     // Also record activity and recalculate dashboard
@@ -642,7 +694,7 @@ export const useStore = create<AppState>()(
           id: `a${Date.now()}`,
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           description: `Checked off a milestone`,
-          icon: "couple",
+          icon: "couple" as const,
           actor: "Couple",
         },
         ...state.activities,
@@ -659,7 +711,7 @@ export const useStore = create<AppState>()(
           id: `a${Date.now()}`,
           timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
           description: `Heard back from our vendor partner`,
-          icon: "vendor",
+          icon: "vendor" as const,
           actor: "Vendor",
         },
         ...state.activities,
@@ -671,12 +723,15 @@ export const useStore = create<AppState>()(
     set((state) => {
       const reminder = state.reminders.find((r) => r.id === reminderId);
       if (!reminder) return state;
-
+      
+      const now = new Date().toISOString();
       const newReminders = state.reminders.map((r) =>
-        r.id === reminderId ? { ...r, status: "sent" as const, lastSent: new Date().toISOString() } : r
+        r.id === reminderId ? { ...r, status: "sent" as const, lastSent: now } : r
       );
 
-      const task = state.tasks.find(t => t.id === reminder.taskId);
+      const task = state.tasks.find(t => t.id === (reminder.taskId || reminder.task));
+      const recipient = state.stakeholders.find(s => s.id === reminder.recipientId) || 
+                        state.stakeholders.find(s => s.name === reminder.recipient);
 
       return { 
         reminders: newReminders,
@@ -684,37 +739,121 @@ export const useStore = create<AppState>()(
           {
             id: `a${Date.now()}`,
             timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            description: `Sent a gentle nudge for: ${task?.title || "pending item"}`,
-            icon: "reminder",
+            description: `Sent a gentle nudge to ${reminder.recipient} regarding "${task?.title || reminder.task}"`,
+            icon: "reminder" as const,
             actor: "System",
+            metadata: {
+              reminderId,
+              taskId: reminder.taskId || task?.id,
+              recipientId: recipient?.id,
+              channel: reminder.channel,
+              sentAt: now,
+              status: "sent"
+            }
           },
           ...state.activities,
         ]
       };
     });
+    get().detectAdvancedRisks();
+  },
+
+  bulkSendReminders: (reminderIds, messages, channel) => {
+    set((state) => {
+      const now = new Date().toISOString();
+      const timestamp = Date.now();
+      
+      const newReminders = state.reminders.map((r) =>
+        reminderIds.includes(r.id) ? { ...r, status: "sent" as const, lastSent: now } : r
+      );
+
+      const newActivities = [
+        {
+          id: `bulk-a${timestamp}`,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          description: `Bulk sent ${reminderIds.length} reminders via ${channel === "whatsapp" ? "WhatsApp" : "Email"}`,
+          icon: "reminder" as const,
+          actor: "System",
+          metadata: {
+            reminderIds,
+            channel,
+            sentAt: now,
+            count: reminderIds.length
+          }
+        },
+        ...state.activities,
+      ];
+
+      return { 
+        reminders: newReminders,
+        activities: newActivities,
+        lastBulkSendTimestamp: timestamp
+      };
+    });
+    get().detectAdvancedRisks();
+  },
+
+  getBulkSendCooldown: () => {
+    const { lastBulkSendTimestamp } = get();
+    if (!lastBulkSendTimestamp) return 0;
+    
+    const COOLDOWN_SECONDS = 60;
+    const elapsed = (Date.now() - lastBulkSendTimestamp) / 1000;
+    return Math.max(0, Math.ceil(COOLDOWN_SECONDS - elapsed));
+  },
+
+  logCommunication: (stakeholderId, channel, templateId, body) => {
+    set((state) => {
+      const stakeholder = state.stakeholders.find(s => s.id === stakeholderId);
+      if (!stakeholder) return state;
+
+      return {
+        activities: [
+          {
+            id: `a${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            description: `Sent a ${templateId} message via ${channel === "whatsapp" ? "WhatsApp" : "Email"} to ${stakeholder.name}`,
+            icon: "stakeholder",
+            actor: "Couple",
+            metadata: {
+              stakeholderId,
+              channel,
+              templateId,
+              bodyLength: body.length
+            }
+          },
+          ...state.activities,
+        ]
+      };
+    });
+    get().detectAdvancedRisks();
   },
 
   snoozeTask: (taskId, days) => {
-    set((state) => ({
-      tasks: state.tasks.map((t) => {
-        if (t.id === taskId) {
-          const newDate = new Date(t.dueDate);
-          newDate.setDate(newDate.getDate() + days);
-          return { ...t, dueDate: newDate.toISOString() };
-        }
-        return t;
-      }),
-      activities: [
-        {
-          id: `a${Date.now()}`,
-          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          description: `Added a little more time for: ${days} days`,
-          icon: "reminder",
-          actor: "System",
-        },
-        ...state.activities,
-      ]
-    }));
+    set((state) => {
+      const task = state.tasks.find(t => t.id === taskId);
+      return {
+        tasks: state.tasks.map((t) => {
+          if (t.id === taskId) {
+            const newDate = new Date(t.dueDate);
+            newDate.setDate(newDate.getDate() + days);
+            return { ...t, dueDate: newDate.toISOString() };
+          }
+          return t;
+        }),
+        activities: [
+          {
+            id: `a${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            description: `Snoozed "${task?.title || "task"}" for ${days} days to find breathing room`,
+            icon: "reminder",
+            actor: "Couple",
+            metadata: { taskId, days }
+          },
+          ...state.activities,
+        ]
+      };
+    });
   },
 
   reassignTask: (taskId, newOwner, newOwnerType) => {
@@ -741,16 +880,33 @@ export const useStore = create<AppState>()(
   },
 
   addProofToTask: (taskId, proof) => {
-    set((state) => ({
-      tasks: state.tasks.map((t) =>
+    set((state) => {
+      const task = state.tasks.find(t => t.id === taskId);
+      const newTasks = state.tasks.map((t) =>
         t.id === taskId ? { 
           ...t, 
           notes: t.notes 
-            ? `${t.notes}\n\n[Payment Proof]: ${proof.docName} - ${proof.amount ? formatCurrency(proof.amount) : 'Payment recorded'} (${proof.date})\n${proof.notes || ''}`
-            : `[Payment Proof]: ${proof.docName} - ${proof.amount ? formatCurrency(proof.amount) : 'Payment recorded'} (${proof.date})\n${proof.notes || ''}`
+            ? `${t.notes}\n\n[Proof Recorded]: ${proof.docName} - ${proof.amount ? formatCurrency(proof.amount) : 'Action completed'} (${proof.date})\n${proof.notes || ''}`
+            : `[Proof Recorded]: ${proof.docName} - ${proof.amount ? formatCurrency(proof.amount) : 'Action completed'} (${proof.date})\n${proof.notes || ''}`
         } : t
-      )
-    }));
+      );
+
+      if (!task) return { tasks: newTasks };
+
+      const update: any = {
+        id: `bu-${Date.now()}`,
+        categoryName: state.budgetCategories.find(c => c.id === task.budgetCategoryId)?.name || task.category,
+        amount: proof.amount || 0,
+        date: proof.date,
+        description: `Recorded progress: ${proof.docName} for ${task.title}`,
+        type: proof.amount ? "increase" : "progress"
+      };
+
+      return {
+        tasks: newTasks,
+        budgetUpdates: [update, ...state.budgetUpdates]
+      };
+    });
   },
 
   generateTimeline: (data) => {
@@ -830,12 +986,6 @@ export const useStore = create<AppState>()(
     get().detectAdvancedRisks();
   },
 
-  getAestheticMode: () => {
-    const daysLeft = get().weddingInfo.daysLeft;
-    if (daysLeft > 180) return "serene";
-    if (daysLeft < 60) return "velocity";
-    return "balanced";
-  },
 
   lockEventDate: (eventName, date) => {
     set((state) => ({
@@ -1330,9 +1480,87 @@ export const useStore = create<AppState>()(
   removeEvent: (id) => set((state) => ({
     events: state.events.filter(e => e.id !== id)
   })),
-  updateTaskCustomData: (taskId, data) => set((state) => ({
-    tasks: state.tasks.map(t => t.id === taskId ? { ...t, customActionData: { ...t.customActionData, ...data } } : t)
-  })),
+  updateTaskCustomData: (taskId, data) => {
+    set((state) => {
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return state;
+
+      const updatedTasks = state.tasks.map(t => 
+        t.id === taskId 
+          ? { ...t, customActionData: { ...(t.customActionData || {}), ...data } } 
+          : t
+      );
+      
+      const updatedTask = updatedTasks.find(t => t.id === taskId)!;
+      let weddingInfoUpdates: Partial<AppWeddingInfo> = {};
+      let taskUpdates: Partial<Task> = {};
+      let categoriesUpdates = [...state.budgetCategories];
+      
+      // 1. Guest Count Handling
+      if (updatedTask.customActionType === "guest_count" && updatedTask.customActionData) {
+        const total = (updatedTask.customActionData.partner1Guests || 0) + 
+                      (updatedTask.customActionData.partner2Guests || 0) + 
+                      (updatedTask.customActionData.mutualGuests || 0);
+        weddingInfoUpdates.guests = total.toString();
+        
+        // Also update any catering task linked to this
+        updatedTasks.forEach(t => {
+          if (t.customActionType === "catering_details" && t.customActionData?.perPlate) {
+            t.estimatedCost = t.customActionData.perPlate * total;
+          }
+        });
+      }
+      
+      // 2. Overall Budget Handling
+      if (updatedTask.customActionType === "overall_budget" && data.amount !== undefined) {
+        const amount = data.amount;
+        weddingInfoUpdates.budget = `₹${(amount / 100000).toFixed(1)}L`;
+      }
+
+      // 3. Catering Details (Auto-calculate cost & link category)
+      if (updatedTask.customActionType === "catering_details") {
+        const perPlate = updatedTask.customActionData?.perPlate || 0;
+        const guests = parseInt(weddingInfoUpdates.guests || state.weddingInfo.guests) || 0;
+        if (perPlate > 0 && guests > 0) {
+          taskUpdates.estimatedCost = perPlate * guests;
+        }
+        
+        // Auto-link to bc2 (Catering) if not already linked
+        taskUpdates.budgetCategoryId = "bc2";
+      }
+
+      // 4. Decor Concept (Update notes/vibe & link category)
+      if (updatedTask.customActionType === "decor_concept" && data.theme) {
+        taskUpdates.notes = `Selected Theme: ${data.theme}\nMood: ${data.mood || 'Not specified'}\n${updatedTask.notes || ''}`;
+        taskUpdates.budgetCategoryId = "bc3";
+      }
+
+      // 5. Sangeet Setlist (Data is merged, adding a note)
+      if (updatedTask.customActionType === "sangeet_setlist" && data.songs) {
+        taskUpdates.notes = `Setlist updated: ${data.songs.length} songs added.\n${updatedTask.notes || ''}`;
+        taskUpdates.budgetCategoryId = "bc7"; // Entertainment
+      }
+
+      // 6. Logistics Pickups (Aggregate total arrivals & link category)
+      if (updatedTask.customActionType === "logistics_pickups" && updatedTask.customActionData?.pickups) {
+        const total = updatedTask.customActionData.pickups.reduce((acc: number, p: any) => acc + (parseInt(p.guests) || 0), 0);
+        taskUpdates.customActionData = { ...updatedTask.customActionData, totalArrivals: total };
+        taskUpdates.budgetCategoryId = "bc8"; // Transport
+      }
+
+      // Apply task updates back to the list
+      const finalTasks = updatedTasks.map(t => 
+        t.id === taskId ? { ...t, ...taskUpdates } : t
+      );
+
+      return {
+        tasks: finalTasks,
+        weddingInfo: { ...state.weddingInfo, ...weddingInfoUpdates },
+        budgetCategories: categoriesUpdates
+      };
+    });
+    get().recalculateBudget();
+  },
 
   addTask: (taskData) => {
     const { weddingInfo } = get();
@@ -1407,6 +1635,24 @@ export const useStore = create<AppState>()(
     }
     
     get().recalculateNextSteps();
+  },
+
+  updateStakeholderContact: (stakeholderId, updates) => {
+    set((state) => ({
+      stakeholders: state.stakeholders.map((s) =>
+        s.id === stakeholderId ? { ...s, ...updates } : s
+      ),
+      activities: [
+        {
+          id: `a${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          description: `Refined contact details for ${state.stakeholders.find(s => s.id === stakeholderId)?.name || 'stakeholder'}`,
+          icon: "stakeholder",
+          actor: "Couple",
+        },
+        ...state.activities,
+      ]
+    }));
   },
 
   claimAuth: () => set({ isAuthClaimed: true }),
@@ -1621,14 +1867,6 @@ export const useStore = create<AppState>()(
     };
   },
 
-  setBudgetPhase: (phase: BudgetPhase) => {
-    set(state => ({
-      weddingInfo: {
-        ...state.weddingInfo,
-        budgetPhase: phase
-      }
-    }));
-  },
 
   getBudgetActionables: () => {
     const { budgetCategories, weddingInfo } = get();
@@ -1734,8 +1972,23 @@ export const useStore = create<AppState>()(
     };
   },
 
+  getAestheticMode: () => {
+    const { weddingInfo } = get();
+    const pace = weddingInfo.planningPace || "serene";
+    if (pace === "serene" || pace === "steady") return "serene";
+    if (pace === "brisk") return "balanced";
+    return "velocity";
+  },
+
   generateVisionSummary: (eventId: string) => {
-    const { events, updateEvent } = get();
+    const { events, updateEvent, weddingInfo, updateWeddingInfo } = get();
+    
+    if (eventId === "global") {
+      const summary = `A ${weddingInfo.weddingType || "grand"} celebration for ${weddingInfo.coupleName} in ${weddingInfo.city}. We envision a journey that balances tradition with modern elegance, bringing together ${weddingInfo.guests} guests for an unforgettable experience. Our goal is to create a series of moments that feel both intimate and spectacular, reflecting our unique story and the joy of this new beginning.`;
+      updateWeddingInfo({ visionSummary: summary });
+      return;
+    }
+
     const event = events.find(e => e.id === eventId);
     if (!event) return;
 

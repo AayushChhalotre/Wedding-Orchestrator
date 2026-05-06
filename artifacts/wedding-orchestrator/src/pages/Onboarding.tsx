@@ -308,7 +308,7 @@ export default function Onboarding() {
         </div>
 
         {/* Form card */}
-        <div className="flex-1 px-6 lg:px-12 pb-28 lg:pb-12">
+        <div className="flex-1 px-6 lg:px-12 pb-40 lg:pb-12">
           <div className={cn("transition-all duration-300 w-full", step === 1 ? "max-w-3xl" : "max-w-lg")}>
             <AnimatePresence mode="wait">
               <motion.div
@@ -381,7 +381,7 @@ export default function Onboarding() {
         </div>
 
         {/* Sticky bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 lg:static bg-background/95 backdrop-blur border-t border-border px-6 py-4 lg:border-none lg:px-12 lg:pb-12">
+        <div className="fixed bottom-0 left-0 right-0 lg:static bg-background/95 backdrop-blur-md border-t border-border px-6 py-4 lg:border-none lg:px-12 lg:pb-12 z-50">
           <div className="max-w-lg flex items-center justify-between gap-3">
             {step > 1 && (
               <button

@@ -153,9 +153,9 @@ export const BudgetRefinementModal: React.FC<BudgetRefinementModalProps> = ({ is
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { id: 'must_have', label: 'Must Have', icon: Heart, color: 'rose' },
-                    { id: 'nice_to_have', label: 'Nice to Have', icon: Star, color: 'amber' },
-                    { id: 'luxury', label: 'Luxury', icon: Flame, color: 'purple' },
+                    { id: 'must_have', label: 'Essential Heart', icon: Heart, color: 'rose' },
+                    { id: 'nice_to_have', label: 'Lovely Additions', icon: Star, color: 'amber' },
+                    { id: 'luxury', label: 'Pure Magic', icon: Flame, color: 'purple' },
                   ].map((p) => (
                     <button
                       key={p.id}
