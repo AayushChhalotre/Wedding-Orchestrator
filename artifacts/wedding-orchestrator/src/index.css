@@ -90,15 +90,15 @@
   --card-foreground: 220 20% 18%;
   --card-border: 38 20% 88%;
 
-  /* Sidebar: deep teal */
-  --sidebar: 182 45% 16%;
-  --sidebar-foreground: 42 30% 94%;
-  --sidebar-border: 182 35% 22%;
-  --sidebar-primary: 182 42% 40%;
+  /* Sidebar: warm parchment — light, airy, luxurious */
+  --sidebar: 40 25% 95%;
+  --sidebar-foreground: 182 40% 18%;
+  --sidebar-border: 38 18% 88%;
+  --sidebar-primary: 182 42% 34%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 182 35% 22%;
-  --sidebar-accent-foreground: 42 30% 94%;
-  --sidebar-ring: 182 42% 50%;
+  --sidebar-accent: 38 22% 90%;
+  --sidebar-accent-foreground: 182 40% 18%;
+  --sidebar-ring: 182 42% 34%;
 
   --popover: 42 40% 98%;
   --popover-foreground: 220 20% 18%;
@@ -167,45 +167,79 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
-/* Sparsh Insight: Serene Mode (> 6 Months) */
+/* Sparsh Insight: Serene Mode (> 6 Months) — Airy editorial calm */
 .mode-serene {
-  --background: 210 20% 98%; /* Soft Indigo/White */
-  --foreground: 220 25% 20%;
-  --primary: 225 35% 45%;    /* Soft Indigo */
-  --accent: 145 25% 90%;     /* Sage Green accent */
-  --card: 210 25% 99%;
+  --background: 215 40% 97%;       /* Very soft sky-ivory */
+  --foreground: 220 28% 20%;
+  --primary: 222 42% 48%;           /* Soft indigo blue */
+  --primary-foreground: 0 0% 100%;
+  --accent: 142 28% 88%;            /* Sage green accent */
+  --accent-foreground: 145 30% 22%;
+  --card: 215 45% 99%;
+  --card-border: 215 25% 90%;
+  --border: 215 20% 88%;
+  --muted: 215 30% 94%;
+  --muted-foreground: 220 15% 50%;
+  --secondary: 215 25% 92%;
+  --secondary-foreground: 220 22% 28%;
+  /* Sidebar: warm white-ivory for serene */
+  --sidebar: 215 35% 96%;
+  --sidebar-foreground: 222 42% 22%;
+  --sidebar-border: 215 20% 89%;
+  --sidebar-primary: 222 42% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 28% 92%;
+  --sidebar-accent-foreground: 222 42% 22%;
   --app-font-sans: 'Cormorant Garamond', serif;
-  --radius: 2rem;            /* Softer corners */
-  --sidebar: 225 40% 12%;
+  --radius: 2rem;                   /* Soft, rounded corners */
 }
 
-/* Sparsh Insight: Balanced Mode (2-6 Months) */
+/* Sparsh Insight: Balanced Mode (2-6 Months) — Warm ivory luxury */
 .mode-balanced {
-  --background: 42 30% 96%;  /* Warm Ivory (Existing) */
+  --background: 42 30% 96%;        /* Warm Ivory */
   --foreground: 220 20% 18%;
-  --primary: 182 42% 32%;    /* Deep Teal */
-  --accent: 42 65% 78%;      /* Muted Gold */
+  --primary: 182 42% 32%;           /* Deep Teal */
+  --primary-foreground: 0 0% 100%;
+  --accent: 42 65% 78%;             /* Muted Gold */
+  --accent-foreground: 38 40% 22%;
   --card: 42 40% 98%;
+  --card-border: 38 20% 88%;
+  --border: 38 20% 85%;
+  --muted: 42 25% 93%;
+  --muted-foreground: 220 12% 48%;
+  --secondary: 38 30% 90%;
+  --secondary-foreground: 220 20% 25%;
+  /* Sidebar: warm parchment for balanced */
+  --sidebar: 40 25% 95%;
+  --sidebar-foreground: 182 42% 18%;
+  --sidebar-border: 38 18% 88%;
+  --sidebar-primary: 182 42% 34%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 38 22% 90%;
+  --sidebar-accent-foreground: 182 42% 18%;
   --app-font-sans: 'Inter', sans-serif;
   --radius: 1rem;
 }
 
-/* Sparsh Insight: Velocity Mode (< 2 Months) */
+/* Sparsh Insight: Velocity Mode (< 2 Months) — Crisp, focused energy */
 .mode-velocity {
-  --background: 220 20% 98%; /* Light Slate (Changed from dark) */
+  --background: 38 25% 97%;        /* Soft warm white — energetic yet bright */
   --foreground: 220 25% 15%;
-  --primary: 38 90% 55%;     /* High-contrast Amber */
-  --secondary: 38 30% 90%;
-  --accent: 38 90% 55%;
-  --muted: 220 15% 94%;
-  --muted-foreground: 220 10% 45%;
+  --primary: 36 88% 52%;            /* Rich amber — high-contrast, motivating */
+  --primary-foreground: 30 40% 12%;
+  --secondary: 38 30% 92%;
+  --secondary-foreground: 220 22% 25%;
+  --accent: 36 88% 52%;
+  --accent-foreground: 30 40% 12%;
+  --muted: 38 20% 94%;
+  --muted-foreground: 220 12% 45%;
   --card: 0 0% 100%;
   --card-border: 38 20% 85%;
   --border: 38 20% 85%;
   --input: 38 20% 88%;
   --app-font-sans: 'Inter', sans-serif;
   --radius: 0.5rem;          /* Sharp, focused corners */
-  --sidebar: 225 40% 12%;
+  --sidebar: 220 20% 92%;    /* Light sidebar for Velocity */
 }
 
 @layer base {

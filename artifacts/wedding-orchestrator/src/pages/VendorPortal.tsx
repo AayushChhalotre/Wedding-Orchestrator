@@ -154,13 +154,13 @@ export default function VendorPortal() {
           </p>
 
           {/* Vision alignment preview */}
-          <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-100 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Vision Alignment Active</p>
-              <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">Your services will be matched against our "Serene Flora" aesthetic.</p>
+              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Vision Alignment Active</p>
+              <p className="text-xs text-indigo-600/70 font-medium">Your services will be matched against our "Serene Flora" aesthetic.</p>
             </div>
           </div>
         </div>

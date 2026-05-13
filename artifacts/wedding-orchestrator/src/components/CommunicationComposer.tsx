@@ -291,26 +291,26 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-4xl overflow-hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-3xl shadow-2xl shadow-indigo-500/10"
+            className="relative w-full max-w-4xl overflow-hidden bg-white/95 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl shadow-indigo-500/10"
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-rose-50/50 dark:from-indigo-950/20 dark:to-rose-950/20">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-50/60 to-rose-50/60">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-500 rounded-xl shadow-lg shadow-indigo-500/20">
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-serif-display text-slate-800 dark:text-slate-100">
+                  <h3 className="text-xl font-serif-display text-slate-800">
                     {isBulk ? `Bulk Communication (${bulkReminderIds.length})` : "Share Update"}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
                     {isBulk ? "Reviewing multiple messages" : `To ${stakeholder?.name || "Stakeholder"}`}
                   </p>
                 </div>
               </div>
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
               >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
@@ -319,18 +319,18 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
             <div className="flex flex-col md:flex-row h-[600px]">
               {/* Sidebar - Settings (Always visible or in config step) */}
               {bulkStep === "config" && (
-                <div className="w-full md:w-72 border-r border-slate-100 dark:border-slate-800 p-6 space-y-8 bg-slate-50/30 dark:bg-slate-950/20 overflow-y-auto">
+                <div className="w-full md:w-72 border-r border-slate-100 p-6 space-y-8 bg-slate-50/50 overflow-y-auto">
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 mb-3">
                       Select Channel
                     </p>
-                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-xl">
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100/80 rounded-xl">
                       <button
                         onClick={() => setContactMethod("whatsapp")}
                         className={cn(
                           "py-2 px-3 rounded-lg text-xs font-bold transition-all",
                           contactMethod === "whatsapp" 
-                            ? "bg-white dark:bg-slate-700 text-green-600 shadow-sm" 
+                            ? "bg-white text-green-600 shadow-sm" 
                             : "text-slate-500 hover:text-slate-700"
                         )}
                       >
@@ -341,7 +341,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                         className={cn(
                           "py-2 px-3 rounded-lg text-xs font-bold transition-all",
                           contactMethod === "email" 
-                            ? "bg-white dark:bg-slate-700 text-indigo-600 shadow-sm" 
+                            ? "bg-white text-indigo-600 shadow-sm" 
                             : "text-slate-500 hover:text-slate-700"
                         )}
                       >
@@ -362,15 +362,15 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left group",
                             selectedTemplate.id === tmpl.id 
-                              ? "bg-white dark:bg-slate-800 shadow-md border border-indigo-100 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400"
-                              : "hover:bg-white/50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400"
+                              ? "bg-white shadow-md border border-indigo-100 text-indigo-600"
+                              : "hover:bg-white/70 text-slate-600"
                           )}
                         >
                           <div className={cn(
                             "p-1.5 rounded-lg transition-colors",
                             selectedTemplate.id === tmpl.id 
                               ? "bg-indigo-500 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:text-indigo-500"
+                              : "bg-slate-100 text-slate-400 group-hover:text-indigo-500"
                           )}>
                             <tmpl.icon className="w-3.5 h-3.5" />
                           </div>
@@ -383,19 +383,19 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
               )}
 
               {/* Main Composer Area */}
-              <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
+              <div className="flex-1 flex flex-col bg-white overflow-hidden">
                 {!isBulk ? (
                   <div className="flex-1 flex flex-col p-8">
                     <div className="flex-1 space-y-4">
                       {isContactMissing && (
-                        <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-center justify-between gap-4">
+                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
-                              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            <div className="p-2 bg-amber-100 rounded-lg">
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-amber-900 dark:text-amber-200">Attention Needed</p>
-                              <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                              <p className="text-xs font-bold text-amber-900">Attention Needed</p>
+                              <p className="text-[10px] text-amber-700 font-medium">
                                 Missing {contactMethod === "whatsapp" ? "phone number" : "email address"} for {currentStakeholder?.name}
                               </p>
                             </div>
@@ -408,7 +408,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                 setIsEditingContact(true);
                                 setNewContactValue(contactMethod === "whatsapp" ? (currentStakeholder as any)?.phone || "" : currentStakeholder?.email || "");
                               }}
-                              className="text-[10px] h-8 rounded-xl border-amber-200 hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/50"
+                              className="text-[10px] h-8 rounded-xl border-amber-200 hover:bg-amber-100"
                             >
                               <Pencil className="w-3 h-3 mr-1" />
                               Add Info
@@ -420,7 +420,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                 value={newContactValue}
                                 onChange={(e) => setNewContactValue(e.target.value)}
                                 placeholder={`Enter ${contactMethod === "whatsapp" ? "phone" : "email"}`}
-                                className="text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 w-48 outline-none focus:ring-2 focus:ring-amber-500/20"
+                                className="text-xs px-3 py-1.5 rounded-lg bg-white border border-amber-200 w-48 outline-none focus:ring-2 focus:ring-amber-500/20"
                               />
                               <Button size="sm" onClick={handleUpdateContact} className="h-8 rounded-lg px-3 bg-amber-600 hover:bg-amber-700 text-white text-[10px]">
                                 Save
@@ -436,7 +436,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                             Draft Message
                           </label>
                           {unresolvedPlaceholders.length > 0 && (
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded-full animate-pulse">
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full animate-pulse">
                               <AlertCircle className="w-3 h-3" />
                               {unresolvedPlaceholders.length} unresolved tags
                             </span>
@@ -447,8 +447,8 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                             value={messageBody}
                             onChange={(e) => setMessageBody(e.target.value)}
                             className={cn(
-                              "w-full h-[380px] p-6 rounded-3xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none text-slate-700 dark:text-slate-300 font-medium leading-relaxed text-sm shadow-inner",
-                              unresolvedPlaceholders.length > 0 && "border-rose-200 dark:border-rose-900/30 ring-rose-500/5"
+                              "w-full h-[380px] p-6 rounded-3xl bg-slate-50 border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none text-slate-700 font-medium leading-relaxed text-sm shadow-inner",
+                              unresolvedPlaceholders.length > 0 && "border-rose-200 ring-rose-500/5"
                             )}
                           />
                           <div className="absolute top-4 right-4 pointer-events-none transition-transform duration-500 group-hover:rotate-12">
@@ -462,12 +462,12 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                   <div className="flex-1 flex flex-col">
                     {bulkStep === "config" ? (
                       <div className="p-8 space-y-6 overflow-y-auto">
-                        <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-900/30">
-                          <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-200 mb-2 flex items-center gap-2">
+                        <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
+                          <h4 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
                             <Sparkles className="w-4 h-4" />
                             How bulk sending works
                           </h4>
-                          <p className="text-xs text-indigo-700/80 dark:text-indigo-400/80 leading-relaxed font-medium">
+                          <p className="text-xs text-indigo-700/80 leading-relaxed font-medium">
                             We've customized the "{selectedTemplate.label}" template for each of your {bulkReminderIds.length} recipients. 
                             You can review each individual message on the next screen before sending.
                           </p>
@@ -476,7 +476,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                         <div className="space-y-3">
                           <div className="flex items-center justify-between px-1">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Our Shared Journey</p>
-                            <span className="text-[10px] font-bold text-indigo-500/80 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-indigo-500/80 bg-indigo-50 px-2 py-0.5 rounded-full">
                               {bulkReminderIds.length} Hearts to Nudge
                             </span>
                           </div>
@@ -485,16 +485,16 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                               const r = reminders.find(rem => rem.id === id);
                               const t = tasks.find(task => task.id === (r?.taskId || r?.task));
                               return r && (
-                                <div key={id} className="group relative flex flex-col gap-3 p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-all cursor-default">
+                                <div key={id} className="group relative flex flex-col gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all cursor-default">
                                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Sparkles className="w-3 h-3 text-rose-400" />
                                   </div>
                                   <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-rose-400 text-white flex items-center justify-center text-[10px] font-bold shadow-sm ring-2 ring-white dark:ring-slate-900">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-rose-400 text-white flex items-center justify-center text-[10px] font-bold shadow-sm ring-2 ring-white">
                                       {r.recipient.charAt(0)}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-xs font-bold truncate text-slate-800 dark:text-slate-100">{r.recipient}</p>
+                                      <p className="text-xs font-bold truncate text-slate-800">{r.recipient}</p>
                                       <p className="text-[9px] text-indigo-500/80 font-bold uppercase tracking-wider">{r.role}</p>
                                     </div>
                                     <span className={cn(
@@ -504,9 +504,9 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                       {r.channel === "whatsapp" ? "WhatsApp" : "Email"}
                                     </span>
                                   </div>
-                                  <div className="pt-3 border-t border-slate-50 dark:border-slate-800/50">
+                                  <div className="pt-3 border-t border-slate-100">
                                     <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.1em] mb-1.5">Touching base on</p>
-                                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-tight line-clamp-1">{r.task}</p>
+                                    <p className="text-xs font-bold text-slate-600 leading-tight line-clamp-1">{r.task}</p>
                                     {t && (
                                       <div className="flex items-center gap-2 mt-2">
                                         <span className="text-[9px] px-1.5 py-0.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-100/50 font-bold flex items-center gap-1">
@@ -528,7 +528,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/50 dark:bg-slate-950/20">
+                      <div className="p-6 overflow-y-auto space-y-4 bg-slate-50/70">
                     ) : (
                         <AnimatePresence mode="popLayout">
                           {bulkReminderIds.map((id, idx) => {
@@ -545,17 +545,17 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                 exit={{ opacity: 0, x: -20, scale: 0.95 }}
                                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                                 className={cn(
-                                  "group bg-white dark:bg-slate-900 rounded-3xl border transition-all duration-500 overflow-hidden",
-                                  isActive ? "border-indigo-500 shadow-xl shadow-indigo-500/10 scale-[1.02] z-10" : "border-slate-200 dark:border-slate-800 opacity-60 scale-95",
-                                  isSent && "border-green-200 dark:border-green-900/30 opacity-40 grayscale-[0.5]"
+                                  "group bg-white rounded-3xl border transition-all duration-500 overflow-hidden",
+                                  isActive ? "border-indigo-500 shadow-xl shadow-indigo-500/10 scale-[1.02] z-10" : "border-slate-200 opacity-60 scale-95",
+                                  isSent && "border-green-200 opacity-40 grayscale-[0.5]"
                                 )}
                               >
                                 <div className="p-6">
                                   {isContactMissing && (
-                                    <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-center justify-between gap-4">
+                                    <div className="mb-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-between gap-4">
                                       <div className="flex items-center gap-3">
-                                        <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                        <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider">
+                                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                                        <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">
                                           Missing {contactMethod} Info
                                         </p>
                                       </div>
@@ -577,7 +577,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                             autoFocus
                                             value={newContactValue}
                                             onChange={(e) => setNewContactValue(e.target.value)}
-                                            className="text-[10px] px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-amber-200 w-32 outline-none"
+                                            className="text-[10px] px-2 py-1 rounded-md bg-white border border-amber-200 w-32 outline-none"
                                           />
                                           <Button size="sm" onClick={handleUpdateContact} className="h-7 rounded-lg bg-amber-600 text-white text-[10px]">
                                             Save
@@ -590,24 +590,24 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                   <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
                                       <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-white dark:ring-slate-900 transition-colors",
-                                        isSent ? "bg-green-500 text-white" : "bg-gradient-to-tr from-indigo-50 to-indigo-100 dark:from-indigo-900/40 dark:to-indigo-800/40 text-indigo-600 dark:text-indigo-400"
+                                        "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ring-2 ring-white transition-colors",
+                                        isSent ? "bg-green-500 text-white" : "bg-gradient-to-tr from-indigo-50 to-indigo-100 text-indigo-600"
                                       )}>
                                         {isSent ? <CheckCircle2 className="w-4 h-4" /> : r.recipient.charAt(0)}
                                       </div>
                                       <div>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{r.recipient}</p>
+                                        <p className="text-xs font-bold text-slate-800">{r.recipient}</p>
                                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{r.role}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {unresolvedPlaceholders.length > 0 && (
-                                        <span className="flex items-center gap-1 text-[8px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded-full">
+                                        <span className="flex items-center gap-1 text-[8px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
                                           <AlertCircle className="w-2.5 h-2.5" />
                                           {unresolvedPlaceholders.length} Tags
                                         </span>
                                       )}
-                                      <span className="text-[9px] font-bold text-indigo-500/60 uppercase tracking-widest bg-indigo-50/50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-full">
+                                      <span className="text-[9px] font-bold text-indigo-500/60 uppercase tracking-widest bg-indigo-50/80 px-2 py-0.5 rounded-full">
                                         {r.channel}
                                       </span>
                                     </div>
@@ -618,14 +618,14 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                                       disabled={!isActive}
                                       onChange={(e) => setBulkMessages({...bulkMessages, [id]: e.target.value})}
                                       className={cn(
-                                        "w-full h-48 p-5 rounded-2xl bg-slate-50/50 dark:bg-slate-950/30 border text-xs font-medium leading-relaxed resize-none transition-all",
-                                        isActive ? "border-indigo-100 dark:border-indigo-900/50 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400" : "border-transparent",
-                                        unresolvedPlaceholders.length > 0 && isActive && "border-rose-200 dark:border-rose-900/30"
+                                        "w-full h-48 p-5 rounded-2xl bg-slate-50/50 border text-xs font-medium leading-relaxed resize-none transition-all",
+                                        isActive ? "border-indigo-100 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400" : "border-transparent",
+                                        unresolvedPlaceholders.length > 0 && isActive && "border-rose-200"
                                       )}
                                       placeholder="Type your personal touch here..."
                                     />
                                     {isActive && (
-                                      <div className="absolute bottom-3 right-3 text-[9px] font-bold text-slate-300 dark:text-slate-600">
+                                      <div className="absolute bottom-3 right-3 text-[9px] font-bold text-slate-400">
                                         {bulkMessages[id]?.length || 0} characters
                                       </div>
                                     )}
@@ -642,7 +642,7 @@ export const CommunicationComposer: React.FC<CommunicationComposerProps> = ({
                 )}
 
                 {/* Footer Actions */}
-                <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-white dark:bg-slate-900">
+                <div className="p-6 border-t border-slate-100 flex items-center justify-end gap-3 bg-white">
                   <Button
                     variant="ghost"
                     onClick={() => {

@@ -1,0 +1,4 @@
+
+> @workspace/wedding-orchestrator@0.0.0 typecheck C:\Users\aayus\Workspace\Projects\Wedding-Orchestrator\Wedding-Orchestrator\artifacts\wedding-orchestrator
+> tsc -p tsconfig.json --noEmit
+
