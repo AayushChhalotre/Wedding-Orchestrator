@@ -28,17 +28,25 @@ export function GoogleOneTap() {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => {
+    script.onload = async () => {
       if (window.google) {
-        // Generate a simple nonce
-        const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        
+        // Generate a random nonce
+        const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))));
+        
+        // Hash the nonce with SHA-256 (Google requires hashed nonce, Supabase requires raw nonce)
+        const encoder = new TextEncoder();
+        const encodedNonce = encoder.encode(nonce);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encodedNonce);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashedNonce = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
         
         window.google.accounts.id.initialize({
           client_id: clientId,
-          nonce: nonce, // Pass nonce to Google
+          nonce: hashedNonce, // Pass HASHED nonce to Google
           callback: async (response: any) => {
             try {
-              await signInWithIdToken(response.credential, nonce); // Pass SAME nonce to Supabase
+              await signInWithIdToken(response.credential, nonce); // Pass RAW nonce to Supabase
               toast({
                 title: "Welcome back!",
                 description: "You've successfully signed in with Google.",
