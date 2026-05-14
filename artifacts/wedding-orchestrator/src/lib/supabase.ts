@@ -29,10 +29,11 @@ export const signInWithGoogle = async () => {
   if (error) throw error;
 };
 
-export const signInWithIdToken = async (idToken: string) => {
+export const signInWithIdToken = async (idToken: string, nonce?: string) => {
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: 'google',
     token: idToken,
+    nonce: nonce,
   });
   if (error) throw error;
   return data;

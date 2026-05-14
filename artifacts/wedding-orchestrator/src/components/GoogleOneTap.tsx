@@ -30,11 +30,15 @@ export function GoogleOneTap() {
     script.defer = true;
     script.onload = () => {
       if (window.google) {
+        // Generate a simple nonce
+        const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        
         window.google.accounts.id.initialize({
           client_id: clientId,
+          nonce: nonce, // Pass nonce to Google
           callback: async (response: any) => {
             try {
-              await signInWithIdToken(response.credential);
+              await signInWithIdToken(response.credential, nonce); // Pass SAME nonce to Supabase
               toast({
                 title: "Welcome back!",
                 description: "You've successfully signed in with Google.",
@@ -48,7 +52,7 @@ export function GoogleOneTap() {
               });
             }
           },
-          auto_select: false, // Don't auto-select to give user control
+          auto_select: false,
           cancel_on_tap_outside: true,
         });
 
