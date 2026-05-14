@@ -47,11 +47,129 @@ export class TimelineGenerator {
 
     // 1. Add Universal Tasks
     const universalTasks: Partial<Task>[] = [
-      { id: "t-guest-est", title: "Confirm initial guest count estimate", category: "Guests", phaseId: "foundation", priority: "high", effort: 2, whyItMatters: "Your guest count dictates almost every other decision, especially venue and budget." },
-      { id: "t-budget", title: "Set overall wedding budget", category: "Finance", phaseId: "foundation", priority: "high", effort: 3, whyItMatters: "A clear budget prevents stress later and helps prioritize what matters most to you." },
-      { id: "t-venue", title: "Finalize venue shortlist and site visits", category: "Venue", phaseId: "foundation", priority: "high", effort: 5, dependencies: ["t-guest-est"], whyItMatters: "Venues book up fast. Securing your date and space is the first big milestone." },
-      { id: "t-caterer", title: "Book caterer", category: "Food", phaseId: "vendor-locking", priority: "high", effort: 3, dependencies: ["t-venue"], whyItMatters: "Good food is what guests remember most. Secure your favorite early." },
-      { id: "t-photo", title: "Book photographer & videographer", category: "Photography", phaseId: "vendor-locking", priority: "medium", effort: 4, dependencies: ["t-venue"], whyItMatters: "These are the memories that last a lifetime. Top talent is often booked a year in advance." },
+      { 
+        id: "t-guest-est", 
+        title: "Confirm initial guest count estimate", 
+        category: "Guests", 
+        phaseId: "foundation", 
+        priority: "high", 
+        effort: 2, 
+        whyItMatters: "Your guest count dictates almost every other decision, especially venue and budget.",
+        customActionType: "guest_count",
+        customActionData: {
+          partner1Guests: parseInt(input.guests) ? Math.floor(parseInt(input.guests)/2) : 100,
+          partner2Guests: parseInt(input.guests) ? Math.floor(parseInt(input.guests)/2) : 100,
+          mutualGuests: 0
+        },
+        requirements: [
+          { text: "Groom's family list", completed: false },
+          { text: "Bride's family list", completed: false },
+          { text: "Mutual friends list", completed: false },
+          { text: "VIP list", completed: false }
+        ]
+      },
+      { 
+        id: "t-budget", 
+        title: "Set overall wedding budget", 
+        category: "Finance", 
+        phaseId: "foundation", 
+        priority: "high", 
+        effort: 3, 
+        whyItMatters: "A clear budget prevents stress later and helps prioritize what matters most to you.",
+        customActionType: "overall_budget",
+        customActionData: { amount: parseInt(input.budget.replace(/[^0-9]/g, '')) * (input.budget.toLowerCase().includes('l') ? 100000 : 1) || 3000000 },
+        requirements: [
+          { text: "Parent/Self contribution alignment", completed: false },
+          { text: "Priority identification", completed: false },
+          { text: "Buffer/Contingency planning", completed: false }
+        ]
+      },
+      { 
+        id: "t-venue", 
+        title: "Finalize venue shortlist and site visits", 
+        category: "Venue", 
+        phaseId: "foundation", 
+        priority: "high", 
+        effort: 5, 
+        dependencies: ["t-guest-est"], 
+        whyItMatters: "Venues book up fast. Securing your date and space is the first big milestone.",
+        customActionType: "venue_shortlist",
+        requirements: [
+          { text: "Minimum capacity check", completed: false },
+          { text: "Location accessibility", completed: false },
+          { text: "Date availability", completed: false },
+          { text: "Budget fit", completed: false }
+        ]
+      },
+      { 
+        id: "t-caterer", 
+        title: "Book caterer", 
+        category: "Food", 
+        phaseId: "vendor-locking", 
+        priority: "high", 
+        effort: 3, 
+        dependencies: ["t-venue"], 
+        whyItMatters: "Good food is what guests remember most. Secure your favorite early.",
+        customActionType: "catering_details",
+        customActionData: { perPlate: 1500, cuisine: "Fusion" },
+        requirements: [
+          { text: "Tasting session", completed: false },
+          { text: "Dietary restriction survey", completed: false },
+          { text: "Per-plate negotiation", completed: false },
+          { text: "Menu selection", completed: false }
+        ]
+      },
+      { 
+        id: "t-photo", 
+        title: "Book photographer & videographer", 
+        category: "Photography", 
+        phaseId: "vendor-locking", 
+        priority: "medium", 
+        effort: 4, 
+        dependencies: ["t-venue"], 
+        whyItMatters: "These are the memories that last a lifetime. Top talent is often booked a year in advance.",
+        requirements: [
+          { text: "Portfolio review", completed: false },
+          { text: "Packages comparison", completed: false },
+          { text: "Contract review", completed: false },
+          { text: "Date confirmation", completed: false }
+        ]
+      },
+      {
+        id: "t-decor",
+        title: "Finalize decor concept and sign decorator",
+        category: "Decor",
+        phaseId: "vendor-locking",
+        priority: "high",
+        effort: 3,
+        dependencies: ["t-venue"],
+        whyItMatters: "Decorator needs venue floor plan and 5 months lead time for custom elements.",
+        customActionType: "decor_concept",
+        customActionData: { theme: "Royal Rajputana", mood: "Regal, Gold, Red" },
+        requirements: [
+          { text: "Theme selection", completed: false },
+          { text: "Mood board approval", completed: false },
+          { text: "Floral vs Props balance", completed: false },
+          { text: "Lighting plan", completed: false }
+        ]
+      },
+      {
+        id: "t-invites",
+        title: "Design and print wedding invitations",
+        category: "Invitations",
+        phaseId: "vendor-locking",
+        priority: "medium",
+        effort: 3,
+        dependencies: ["t-guest-est"],
+        whyItMatters: "Physical invitations require 4 weeks for printing and delivery.",
+        customActionType: "invitation_designs",
+        requirements: [
+          { text: "Content finalization", completed: false },
+          { text: "Vendor selection", completed: false },
+          { text: "Paper quality check", completed: false },
+          { text: "Sample proof approval", completed: false }
+        ]
+      }
     ];
 
     // 2. Conditional Tasks
@@ -63,7 +181,23 @@ export class TimelineGenerator {
       universalTasks.push(
         { id: "t-visa", title: "Check visa & travel requirements", category: "Logistics", phaseId: "foundation", priority: "high", effort: 3, whyItMatters: "International or remote travel requires early coordination to ensure all your loved ones can make it." },
         { id: "t-travel", title: "Book group travel / room blocks", category: "Logistics", phaseId: "vendor-locking", priority: "high", effort: 4, whyItMatters: "Securing travel early saves costs and ensures everyone stays together." },
-        { id: "t-welcome-hamper", title: "Design Welcome Hampers for out-of-town guests", category: "Guests", phaseId: "ceremony-planning", priority: "low", effort: 3, whyItMatters: "A thoughtful touch for guests traveling long distances." }
+        { id: "t-welcome-hamper", title: "Design Welcome Hampers for out-of-town guests", category: "Guests", phaseId: "ceremony-planning", priority: "low", effort: 3, whyItMatters: "A thoughtful touch for guests traveling long distances." },
+        {
+          id: "t-pickup",
+          title: "Arrange airport pickup for outstation relatives",
+          category: "Logistics",
+          phaseId: "finalization",
+          priority: "low",
+          effort: 4,
+          whyItMatters: "Relatives flying in need coordinated pickup before the event.",
+          customActionType: "logistics_pickups",
+          customActionData: { pickups: [], totalArrivals: 0 },
+          requirements: [
+            { text: "Flight details collection", completed: false },
+            { text: "Driver assignment", completed: false },
+            { text: "Vehicle coordination", completed: false }
+          ]
+        }
       );
     }
 
@@ -73,7 +207,24 @@ export class TimelineGenerator {
       universalTasks.push(
         { id: "t-events-seq", title: "Define sequence of events", category: "Planning", phaseId: "foundation", priority: "medium", effort: 3, whyItMatters: "Managing multiple events requires a clear flow to keep guests engaged and logistics smooth." },
         { id: "t-day-wise-itinerary", title: "Finalize day-wise itinerary for guests", category: "Guests", phaseId: "ceremony-planning", priority: "medium", effort: 2, whyItMatters: "Helps guests plan their time and outfits for various rituals." },
-        { id: "t-hosp-desk", title: "Setup guest hospitality desk", category: "Logistics", phaseId: "finalization", priority: "medium", effort: 2, whyItMatters: "A dedicated point of contact helps guests navigate the multi-day celebration." }
+        { id: "t-hosp-desk", title: "Setup guest hospitality desk", category: "Logistics", phaseId: "finalization", priority: "medium", effort: 2, whyItMatters: "A dedicated point of contact helps guests navigate the multi-day celebration." },
+        {
+          id: "t-sangeet",
+          title: "Plan sangeet program and music setlist",
+          category: "Rituals",
+          phaseId: "ceremony-planning",
+          priority: "medium",
+          effort: 5,
+          whyItMatters: "Sangeet choreography requires practice and coordination.",
+          customActionType: "sangeet_setlist",
+          customActionData: { songs: [] },
+          requirements: [
+            { text: "Song selection", completed: false },
+            { text: "Performer assignment", completed: false },
+            { text: "Choreographer hire", completed: false },
+            { text: "Rehearsal schedule", completed: false }
+          ]
+        }
       );
     }
 
