@@ -50,6 +50,7 @@ export interface AppWeddingInfo extends WeddingInfo {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
   avatar?: string;
@@ -149,6 +150,9 @@ export interface AppState {
   analyzeWhatsApp: (file: File) => Promise<void>;
   claimAuth: () => void;
   signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+  hydrateFromCloud: (data: any) => void;
+  triggerCloudSync: () => Promise<void>;
   lockInDate: (date: string) => void;
   lockEventDate: (eventName: string, date: string) => void;
   setWeddingDuration: (days: number) => void;
@@ -955,18 +959,81 @@ export const useStore = create<AppState>()(
 
   signInWithGoogle: async () => {
     set({ syncStatus: 'syncing' });
-    // Mock delay
-    await new Promise(r => setTimeout(r, 1200));
+    try {
+      const { signInWithGoogle: supabaseSignIn } = await import('@/lib/supabase');
+      await supabaseSignIn();
+      // Redirect happens, so state update will happen on return in App.tsx
+    } catch (error) {
+      console.error('Sign in error:', error);
+      set({ syncStatus: 'idle' });
+    }
+  },
+
+  signOut: async () => {
+    console.log('Starting sign out...');
+    try {
+      const { signOut: supabaseSignOut } = await import('@/lib/supabase');
+      await supabaseSignOut();
+      console.log('Supabase sign out complete');
+      
+      // Reset state to initial values
+      set({ 
+        user: null, 
+        isAuthClaimed: false, 
+        syncStatus: 'idle',
+        lastSyncedAt: null,
+        // Clear sensitive/personalized data
+        weddingInfo: { ...initialWeddingInfo, daysLeft: calculateDaysLeft(initialWeddingInfo.weddingDate) },
+        events: [],
+        tasks: [...initialTasks],
+        stakeholders: [...initialStakeholders],
+        budgetCategories: [...initialBudgetCategories],
+        budgetUpdates: [...initialBudgetUpdates],
+        activities: [...initialActivities],
+        risks: [...initialRisks]
+      });
+      console.log('Store reset complete');
+      // Force redirect to home/onboarding
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  },
+
+  hydrateFromCloud: (data) => {
+    if (!data) return;
     set((state) => ({
-      user: {
-        name: state.weddingInfo.partner1Name || "Partner 1",
-        email: "couple@example.com",
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${state.weddingInfo.partner1Name || "Partner1"}`
-      },
+      ...state,
+      weddingInfo: { ...state.weddingInfo, ...data.weddingInfo },
+      events: data.events || [],
+      statusTracking: { ...state.statusTracking, ...data.statusTracking },
+      tasks: data.tasks || [],
+      budgetCategories: data.budgetCategories || [],
+      stakeholders: data.stakeholders || [],
+      activities: data.activities || [],
+      risks: data.risks || [],
       isAuthClaimed: true,
-      syncStatus: 'saved',
-      lastSyncedAt: new Date().toISOString()
+      lastSyncedAt: new Date().toISOString(),
+      syncStatus: 'saved'
     }));
+  },
+
+  triggerCloudSync: async () => {
+    const { user, syncStatus } = get();
+    if (!user || syncStatus === 'syncing') return;
+
+    set({ syncStatus: 'syncing' });
+    try {
+      const { syncService } = await import('@/lib/syncService');
+      await syncService.saveWeddingToCloud(user.id, get());
+      set({ 
+        syncStatus: 'saved', 
+        lastSyncedAt: new Date().toISOString() 
+      });
+    } catch (error) {
+      console.error('Sync failed:', error);
+      set({ syncStatus: 'idle' });
+    }
   },
   lockInDate: (date) => {
     const isoDate = new Date(date).toISOString();

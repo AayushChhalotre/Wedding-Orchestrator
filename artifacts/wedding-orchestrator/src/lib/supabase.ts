@@ -13,15 +13,41 @@ export const supabase = createClient(
 );
 
 /**
- * Lazy Auth Helper: 
- * Ensures we have an anonymous session for the "Aha!" moment.
+ * Real Auth Helpers
  */
-export const ensureAnonymousSession = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    // Supabase has built-in anonymous sign-ins
-    // We can also just use a local UUID for the extraction logic
-    return null;
-  }
-  return session;
+export const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
+  if (error) throw error;
+};
+
+export const signInWithIdToken = async (idToken: string) => {
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: 'google',
+    token: idToken,
+  });
+  if (error) throw error;
+  return data;
+};
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+};
+
+export const getUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+};
+
+export const onAuthStateChange = (callback: (event: string, session: any) => void) => {
+  return supabase.auth.onAuthStateChange(callback);
 };

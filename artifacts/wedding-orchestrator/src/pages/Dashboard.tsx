@@ -16,7 +16,8 @@ import {
   Clock,
   CheckCircle2,
   Filter,
-  ShieldCheck
+  ShieldCheck,
+  LogOut
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Layout } from "@/components/Layout";
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const stakeholders = useStore(state => state.stakeholders);
   const phases = useStore(state => state.phases);
   const lastCompletedTaskId = useStore(state => state.lastCompletedTaskId);
+  const signOut = useStore(state => state.signOut);
   
   const getRelevantTasks = useStore(state => state.getRelevantTasks);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -140,7 +142,7 @@ export default function Dashboard() {
               {syncStatus !== 'idle' && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full text-[10px] font-bold text-primary border border-primary/10">
                   {syncStatus === 'syncing' ? <RefreshCcw size={10} className="animate-spin" /> : <ShieldCheck size={10} className="text-primary/70" />}
-                  {syncStatus === 'syncing' ? 'UPDATING...' : 'PROTECTED'}
+                  {syncStatus === 'syncing' ? 'SYNCING...' : 'SAVED TO CLOUD'}
                 </div>
               )}
 
@@ -161,15 +163,35 @@ export default function Dashboard() {
           {isAuthClaimed && (
             <motion.div 
               whileHover={{ y: -2 }}
-              className="flex items-center gap-4 bg-white/40 backdrop-blur-md p-3 pr-6 rounded-[1.25rem] border border-white/50 shadow-sm noise-bg"
+              className="flex items-center gap-4 bg-white/40 backdrop-blur-md p-2 pr-6 rounded-[1.25rem] border border-white/50 shadow-sm noise-bg group relative cursor-pointer"
             >
               <div className="relative">
                 <img src={user?.avatar} className="w-11 h-11 rounded-xl border border-white/60 shadow-sm object-cover" alt="avatar" />
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
               </div>
-              <div>
+              <div className="flex flex-col">
                 <p className="text-sm font-bold leading-tight">{user?.name}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-medium tracking-wide">Last active {lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'just now'}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 font-medium tracking-wide">
+                  {syncStatus === 'syncing' ? 'Saving changes...' : `Last active ${lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'just now'}`}
+                </p>
+              </div>
+              
+              {/* Sign Out Tooltip/Button */}
+              <div className="absolute top-full right-0 pt-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all translate-y-2 group-hover:translate-y-0 z-50">
+                <div className="bg-white border border-red-100 rounded-xl shadow-xl overflow-hidden min-w-[140px]">
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Sign out button clicked');
+                      signOut();
+                    }}
+                    className="w-full text-left px-4 py-3 text-red-600 text-[10px] font-bold hover:bg-red-50 transition-colors flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <LogOut size={12} />
+                    SIGN OUT
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
