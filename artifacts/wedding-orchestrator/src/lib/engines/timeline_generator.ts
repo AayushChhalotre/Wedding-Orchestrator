@@ -250,6 +250,10 @@ export class TimelineGenerator {
         notes: "",
         priority: t.priority || "medium",
         effort: t.effort || 2,
+        // Rich interactive widget properties
+        ...(t.customActionType && { customActionType: t.customActionType }),
+        ...(t.customActionData && { customActionData: t.customActionData }),
+        ...(t.requirements && { requirements: t.requirements }),
       });
     });
 
